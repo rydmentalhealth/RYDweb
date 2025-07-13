@@ -1,0 +1,10 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://rydmentalhealth.org
+
+# Sitemaps
+Sitemap: https://rydmentalhealth.org/sitemap.xml
+Sitemap: https://rydmentalhealth.org/server-sitemap.xml

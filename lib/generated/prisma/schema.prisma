@@ -1,0 +1,404 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Unified User model that combines authentication and profile data
+model User {
+  id            String     @id @default(cuid())
+  // Authentication fields
+  email         String     @unique
+  emailVerified DateTime?
+  password      String?
+  role          UserRole   @default(VOLUNTEER)
+  status        UserStatus @default(PENDING)
+
+  // Profile fields (previously in TeamMember)
+  firstName        String?
+  lastName         String?
+  name             String? // Computed from firstName + lastName
+  avatar           String?
+  bio              String?
+  jobTitle         String?
+  department       String?
+  phone            String?
+  nationalId       String?
+  startDate        DateTime?
+  endDate          DateTime?
+  location         String?
+  district         String?
+  region           String?
+  languages        String?
+  skills           String?
+  emergencyContact String?
+  availability     Availability?
+  weeklyHours      Int?          @default(40)
+
+  // Authentication relations
+  accounts Account[]
+  sessions Session[]
+
+  // Application relations
+  timeEntries        TimeEntry[]
+  tasks              TaskAssignee[]
+  documents          Document[]
+  projectMemberships ProjectMember[]
+  projectsOwned      Project[]       @relation("ProjectOwner")
+  comments           TaskComment[]
+  tasksCreated       Task[]          @relation("TaskCreator")
+  checkIns           CheckIn[]
+  teams              UserTeam[] // New: User team memberships
+
+  // Audit fields
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  approvedAt    DateTime?
+  approvedById  String?
+  approvedBy    User?     @relation("UserApproval", fields: [approvedById], references: [id])
+  approvedUsers User[]    @relation("UserApproval")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+  VOLUNTEER
+}
+
+enum UserStatus {
+  PENDING // Awaiting admin approval
+  ACTIVE // Approved and active
+  INACTIVE // Temporarily deactivated
+  SUSPENDED // Suspended by admin
+  REJECTED // Application rejected
+}
+
+enum Availability {
+  FULL_TIME
+  PART_TIME
+  ON_CALL
+  FLEXIBLE
+}
+
+// Task model for assignments
+model Task {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  startDate   DateTime? // Start of the deadline range
+  endDate     DateTime? // End of the deadline range
+  priority    TaskPriority     @default(MEDIUM)
+  status      TaskStatus       @default(NOT_STARTED)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  projectId   String?
+  project     Project?         @relation(fields: [projectId], references: [id])
+  createdById String?
+  createdBy   User?            @relation("TaskCreator", fields: [createdById], references: [id])
+  attachments TaskAttachment[]
+  comments    TaskComment[]
+  timeEntries TimeEntry[]
+  completedAt DateTime?
+  assignees   TaskAssignee[] // Individual user assignments
+  teams       TaskTeam[] // Team assignments
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+}
+
+// Task attachments model
+model TaskAttachment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileUrl   String
+  fileType  String
+  fileSize  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Task comments model
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Time tracking model
+model TimeEntry {
+  id          String    @id @default(cuid())
+  taskId      String
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int? // Duration in minutes
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+// Project model
+model Project {
+  id           String                 @id @default(cuid())
+  name         String                 @db.VarChar(100)
+  description  String?
+  status       ProjectStatus          @default(PLANNING)
+  priority     ProjectPriority        @default(MEDIUM)
+  startDate    DateTime?
+  endDate      DateTime?
+  budget       Float?
+  clientId     String?
+  client       Client?                @relation(fields: [clientId], references: [id])
+  ownerId      String
+  owner        User                   @relation("ProjectOwner", fields: [ownerId], references: [id])
+  colorTag     String?
+  team         ProjectMember[]
+  tasks        Task[]
+  documents    Document[]
+  transactions FinancialTransaction[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// Project members junction table
+model ProjectMember {
+  id        String      @id @default(cuid())
+  projectId String
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  role      ProjectRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+
+  @@unique([projectId, userId])
+}
+
+enum ProjectRole {
+  LEADER
+  COORDINATOR
+  MEMBER
+}
+
+// Attendance model
+model CheckIn {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  checkInTime  DateTime  @default(now())
+  checkOutTime DateTime?
+  notes        String?
+  location     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// Task assignees junction table
+model TaskAssignee {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  assignedAt DateTime @default(now())
+
+  @@unique([taskId, userId])
+}
+
+// Document Category model
+model DocumentCategory {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  color       String?    @default("#4f46e5")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  documents   Document[]
+}
+
+// Document model
+model Document {
+  id           String            @id @default(cuid())
+  title        String
+  description  String?
+  fileName     String
+  fileUrl      String
+  fileType     String
+  fileSize     Int?
+  categoryId   String?
+  category     DocumentCategory? @relation(fields: [categoryId], references: [id])
+  uploadedById String
+  uploadedBy   User              @relation(fields: [uploadedById], references: [id])
+  projectId    String?
+  project      Project?          @relation(fields: [projectId], references: [id])
+  accessLevel  DocumentAccess    @default(ALL_STAFF)
+  isPublic     Boolean           @default(false)
+  tags         String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+enum DocumentAccess {
+  PUBLIC
+  ALL_STAFF
+  STAFF_ONLY
+  ADMIN_ONLY
+}
+
+// Financial transaction model
+model FinancialTransaction {
+  id          String          @id @default(cuid())
+  amount      Float
+  description String?
+  date        DateTime        @default(now())
+  type        TransactionType
+  category    String?
+  reference   String?
+  notes       String?
+  projectId   String?
+  project     Project?        @relation(fields: [projectId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  DONATION
+  GRANT
+}
+
+// Client model
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  website   String?
+  notes     String?
+  projects  Project[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// Team model for organizational structure
+model Team {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String?  @default("#4f46e5")
+  icon        String? // Icon name for UI display
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members UserTeam[]
+  tasks   TaskTeam[]
+}
+
+// User-Team junction table (many-to-many)
+model UserTeam {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId   String
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  role     TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  @@unique([userId, teamId])
+}
+
+enum TeamRole {
+  LEADER
+  COORDINATOR
+  MEMBER
+}
+
+// Task-Team junction table for team assignments
+model TaskTeam {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  teamId     String
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([taskId, teamId])
+}
