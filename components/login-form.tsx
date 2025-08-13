@@ -21,6 +21,7 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const emailLinkEnabled = process.env.NEXT_PUBLIC_EMAIL_SIGNIN_ENABLED === 'true';
 
   // Check for URL messages
   const message = searchParams.get('message');
@@ -156,14 +157,16 @@ export function LoginForm({
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <button
-                    type="button"
-                    onClick={handleEmailLinkSignIn}
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                    disabled={isLoading}
-                  >
-                    Login with email link
-                  </button>
+                  {emailLinkEnabled && (
+                    <button
+                      type="button"
+                      onClick={handleEmailLinkSignIn}
+                      className="ml-auto text-sm underline-offset-2 hover:underline"
+                      disabled={isLoading}
+                    >
+                      Login with email link
+                    </button>
+                  )}
                 </div>
                 <Input 
                   id="password" 
