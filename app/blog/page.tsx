@@ -201,40 +201,39 @@ export default function BlogPage() {
       id: 'a1',
       title: 'THE NEGATIVE IMPACT OF SOCIAL MEDIA ON MENTAL HEALTH BY NAMUYANJA ANNAH VERONICA',
       date: '2025-08-08',
-      summary: 'While social media is part of the modern day life and has it’s positive impact, it poses a threat to mental health especially if you are not well grounded. 
-Social media creates an ideal life through images on instagram,content on tiktok and through the unsolicited advise that tons of people have to give. This ideal life that is painted creates issues of fomo( fear of missing out), comparison which breeds lack of being content,social media addiction, body negativity, cyberbullying to mention but a few. 
-Let us unpack them one by one.',
+      summary: `While social media is part of the modern day life and has it’s positive impact, it poses a threat to mental health especially if you are not well grounded.
+ Social media creates an ideal life through images on instagram,content on tiktok and through the unsolicited advise that tons of people have to give. This ideal life that is painted creates issues of fomo( fear of missing out), comparison which breeds lack of being content,social media addiction, body negativity, cyberbullying to mention but a few.
+ Let us unpack them one by one.`,
       content: (
         <div>
           <p>
             ● Fear of missing out and comparison
-Exposure to content on social media inform of concerts, brunch, relationships, achievements can lead to anxiety from the fear of missing out on such a life and events. Often times, this leads to comparison due to feeling inadequate and feeling like one's life is incomplete and is missing something forgetting that sometimes this content does not show the behind the scenes and may sometimes be exaggerated or incomplete considering most people share the perfect and happy snippets of their lives.
-● Social media addiction
-Many of us spend countless hours on social media platforms scrolling away like our life depends on it not realizing that this is an addiction slowly growing and eating away at us. Many of us might find ourselves with an obsession to check every notification and anxious when we are not online. This can breed anxiety, sleep disturbances,lack of focus and reduced productivity which may in turn contribute to a dysregulated nervous system.
-● Body negativity
-This is mainly for the female population. It is not uncommon for the plus size women to be body shammed on social media platforms through negative comments and abusive words forgetting that we do not chose the bodies we are given. Also with tonnes of images of what an ideal body should look like for a women, this can cause depression, low self esteem and negative self talk.
-● Cyberbullying
-Negative comments that aim to put people down when they post something can affect ones emotional health leading to depression and anxiety. This is all because most people in the comment section lack empathy, kindness but have alot of bitterness, anger, and negativity to give.
+            Exposure to content on social media inform of concerts, brunch, relationships, achievements can lead to anxiety from the fear of missing out on such a life and events. Often times, this leads to comparison due to feeling inadequate and feeling like one's life is incomplete and is missing something forgetting that sometimes this content does not show the behind the scenes and may sometimes be exaggerated or incomplete considering most people share the perfect and happy snippets of their lives.
+          ● Social media addiction
+          Many of us spend countless hours on social media platforms scrolling away like our life depends on it not realizing that this is an addiction slowly growing and eating away at us. Many of us might find ourselves with an obsession to check every notification and anxious when we are not online. This can breed anxiety, sleep disturbances,lack of focus and reduced productivity which may in turn contribute to a dysregulated nervous system.
+          ● Body negativity
+          This is mainly for the female population. It is not uncommon for the plus size women to be body shammed on social media platforms through negative comments and abusive words forgetting that we do not chose the bodies we are given. Also with tonnes of images of what an ideal body should look like for a women, this can cause depression, low self esteem and negative self talk.
+          ● Cyberbullying
+          Negative comments that aim to put people down when they post something can affect ones emotional health leading to depression and anxiety. This is all because most people in the comment section lack empathy, kindness but have alot of bitterness, anger, and negativity to give.
           </p>
           <p>
             While this negative impact stands, we can use social media better to mitigate these negative effects through;
 
-● Showing kindness through our comments or saying nothing at all if you do not have anything positive or kind to say.
+          ● Showing kindness through our comments or saying nothing at all if you do not have anything positive or kind to say.
 
-● Curating your feed. Following accounts that uplift and inspire you and unfollowing any accounts that have triggering content.
+          ● Curating your feed. Following accounts that uplift and inspire you and unfollowing any accounts that have triggering content.
 
-● Social media detoxes every once in a while. Taking time off social media every now and then to reset and to make time for yourself.
+          ● Social media detoxes every once in a while. Taking time off social media every now and then to reset and to make time for yourself.
 
-● Setting time limits using in built app timers.
-Written by NAMUYANJA ANNAH VERONICA.
+          ● Setting time limits using in built app timers.
+          Written by NAMUYANJA ANNAH VERONICA.
           </p>
         </div>
       ),
     },
     {
       id: 'a2',
-      title: 'Still in the Spotlight:
-(by Fatma Khamis Muhammad, volunteer at RYD',
+      title: 'Still in the Spotlight: (by Fatma Khamis Muhammad, volunteer at RYD)',
       date: '2025-07-14',
       summary: 'For anyone who has/ is struggling with social axiety.',
       content: (
