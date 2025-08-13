@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Post {
   id: string;
@@ -80,20 +82,24 @@ function Section({
       <div className="container">
         <h2 className="section-title">{title}</h2>
         <p className="section-description">{description}</p>
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => {
-            const key = `${sectionKey}-${post.id}`;
-            const isOpen = openSet.has(key);
-            return (
-              <PostCard
-                key={key}
-                post={post}
-                isOpen={isOpen}
-                onToggle={() => toggle(key)}
-              />
-            );
-          })}
-        </div>
+        {posts.length === 0 ? (
+          <div className="mt-8 text-sm text-muted-foreground">No posts found.</div>
+        ) : (
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {posts.map((post) => {
+              const key = `${sectionKey}-${post.id}`;
+              const isOpen = openSet.has(key);
+              return (
+                <PostCard
+                  key={key}
+                  post={post}
+                  isOpen={isOpen}
+                  onToggle={() => toggle(key)}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -101,6 +107,8 @@ function Section({
 
 export default function BlogPage() {
   const [openPostIds, setOpenPostIds] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<'all' | 'updates' | 'communications' | 'articles'>('all');
 
   const toggle = (key: string) => {
     setOpenPostIds((prev) => {
@@ -228,6 +236,19 @@ export default function BlogPage() {
     },
   ];
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const matchesQuery = (post: Post) => {
+    if (!normalizedQuery) return true;
+    return (
+      post.title.toLowerCase().includes(normalizedQuery) ||
+      post.summary.toLowerCase().includes(normalizedQuery)
+    );
+  };
+
+  const filteredUpdates = useMemo(() => updatesPosts.filter(matchesQuery), [normalizedQuery]);
+  const filteredComm = useMemo(() => commPosts.filter(matchesQuery), [normalizedQuery]);
+  const filteredArticles = useMemo(() => articlesPosts.filter(matchesQuery), [normalizedQuery]);
+
   return (
     <>
       <Navbar />
@@ -238,35 +259,65 @@ export default function BlogPage() {
             <p className="mt-4 max-w-2xl text-lg text-gray-600">
               Stories, updates, and resources from our community. Explore announcements, progress updates, and long-form articles — all in one place.
             </p>
+
+            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="sm:col-span-2">
+                <Input
+                  placeholder="Search posts by keyword..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  aria-label="Search posts"
+                />
+              </div>
+              <div>
+                <Select value={category} onValueChange={(v) => setCategory(v as any)}>
+                  <SelectTrigger aria-label="Filter by category">
+                    <SelectValue placeholder="Filter by category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    <SelectItem value="updates">Updates</SelectItem>
+                    <SelectItem value="communications">Communications & Announcements</SelectItem>
+                    <SelectItem value="articles">Articles</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </section>
 
-        <Section
-          sectionKey="updates"
-          title="Updates"
-          description="The latest changes and improvements across our platform and programs."
-          posts={updatesPosts}
-          openSet={openPostIds}
-          toggle={toggle}
-        />
+        {category === 'all' || category === 'updates' ? (
+          <Section
+            sectionKey="updates"
+            title="Updates"
+            description="The latest changes and improvements across our platform and programs."
+            posts={filteredUpdates}
+            openSet={openPostIds}
+            toggle={toggle}
+          />
+        ) : null}
 
-        <Section
-          sectionKey="communications"
-          title="Communications & Announcements"
-          description="Timely messages for our community, including schedules and event highlights."
-          posts={commPosts}
-          openSet={openPostIds}
-          toggle={toggle}
-        />
+        {category === 'all' || category === 'communications' ? (
+          <Section
+            sectionKey="communications"
+            title="Communications & Announcements"
+            description="Timely messages for our community, including schedules and event highlights."
+            posts={filteredComm}
+            openSet={openPostIds}
+            toggle={toggle}
+          />
+        ) : null}
 
-        <Section
-          sectionKey="articles"
-          title="Articles"
-          description="Thought pieces, guides, and educational content written by our team and partners."
-          posts={articlesPosts}
-          openSet={openPostIds}
-          toggle={toggle}
-        />
+        {category === 'all' || category === 'articles' ? (
+          <Section
+            sectionKey="articles"
+            title="Articles"
+            description="Thought pieces, guides, and educational content written by our team and partners."
+            posts={filteredArticles}
+            openSet={openPostIds}
+            toggle={toggle}
+          />
+        ) : null}
       </main>
       <Footer />
     </>

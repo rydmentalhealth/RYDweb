@@ -1,6 +1,7 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
+import tseslint from "@typescript-eslint/eslint-plugin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,6 +13,9 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals"),
   {
+    plugins: {
+      "@typescript-eslint": tseslint,
+    },
     ignores: [
       // Generated files and directories
       "lib/generated/**",
@@ -28,8 +32,6 @@ const eslintConfig = [
       "build/**",
       "coverage/**",
     ],
-  },
-  {
     rules: {
       // Disable strict rules that cause issues with generated code
       "@typescript-eslint/no-unused-expressions": "off",
