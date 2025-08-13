@@ -22,6 +22,14 @@ export function LoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailLinkEnabled = process.env.NEXT_PUBLIC_EMAIL_SIGNIN_ENABLED === 'true';
+  const [isEmbeddedBrowser, setIsEmbeddedBrowser] = useState(false);
+
+  useEffect(() => {
+    // Detect common embedded/in-app browsers that Google blocks for OAuth
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const embeddedPattern = /(FBAN|FBAV|Instagram|Line|Messenger|WhatsApp|TikTok|WeChat|Electron|WebView|wv)/i;
+    setIsEmbeddedBrowser(embeddedPattern.test(userAgent));
+  }, []);
 
   // Check for URL messages
   const message = searchParams.get('message');
@@ -38,6 +46,11 @@ export function LoginForm({
     setIsLoading(true);
     
     try {
+      if (isEmbeddedBrowser) {
+        toast.error("Google sign-in is blocked inside in-app browsers. Open this page in Chrome or Safari and try again.");
+        setIsLoading(false);
+        return;
+      }
       console.log(`[Login Form] Starting ${provider} authentication`);
       await signIn(provider, { 
         callbackUrl: "/dashboard",
@@ -140,6 +153,14 @@ export function LoginForm({
                   </AlertDescription>
                 </Alert>
               )}
+              {isEmbeddedBrowser && (
+                <Alert className="border-yellow-200 bg-yellow-50">
+                  <CheckCircle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800">
+                    Google sign-in cannot run inside in-app browsers (e.g., Instagram, Facebook). Please open this page in Chrome or Safari and try again.
+                  </AlertDescription>
+                </Alert>
+              )}
               
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -192,7 +213,7 @@ export function LoginForm({
                   variant="outline" 
                   className="w-full"
                   onClick={() => handleProviderSignIn("google")}
-                  disabled={isLoading}
+                  disabled={isLoading || isEmbeddedBrowser}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -207,7 +228,7 @@ export function LoginForm({
                   variant="outline" 
                   className="w-full"
                   onClick={() => handleProviderSignIn("apple")}
-                  disabled={isLoading}
+                  disabled={isLoading || isEmbeddedBrowser}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
