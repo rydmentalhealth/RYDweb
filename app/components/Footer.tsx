@@ -79,7 +79,7 @@ export default function Footer() {
               />
             </Link>
             <p className="text-gray-400 text-sm">
-              Supporting mental health and well-being through community and resources.
+              Healing begins with faith.
             </p>
           </div>
 
