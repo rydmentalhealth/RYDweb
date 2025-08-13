@@ -208,11 +208,13 @@ export default function BlogPage() {
         <div>
           <p>
             ● Fear of missing out and comparison
-            Exposure to content on social media inform of concerts, brunch, relationships, achievements can lead to anxiety from the fear of missing out on such a life and events. Often times, this leads to comparison due to feeling inadequate and feeling like one's life is incomplete and is missing something forgetting that sometimes this content does not show the behind the scenes and may sometimes be exaggerated or incomplete considering most people share the perfect and happy snippets of their lives.<p>
+            Exposure to content on social media inform of concerts, brunch, relationships, achievements can lead to anxiety from the fear of missing out on such a life and events. Often times, this leads to comparison due to feeling inadequate and feeling like one's life is incomplete and is missing something forgetting that sometimes this content does not show the behind the scenes and may sometimes be exaggerated or incomplete considering most people share the perfect and happy snippets of their lives.
           <p>
             ● Social media addiction
-          Many of us spend countless hours on social media platforms scrolling away like our life depends on it not realizing that this is an addiction slowly growing and eating away at us. Many of us might find ourselves with an obsession to check every notification and anxious when we are not online. This can breed anxiety, sleep disturbances,lack of focus and reduced productivity which may in turn contribute to a dysregulated nervous system.<p>● Body negativity
-          This is mainly for the female population. It is not uncommon for the plus size women to be body shammed on social media platforms through negative comments and abusive words forgetting that we do not chose the bodies we are given. Also with tonnes of images of what an ideal body should look like for a women, this can cause depression, low self esteem and negative self talk.<p> 
+          Many of us spend countless hours on social media platforms scrolling away like our life depends on it not realizing that this is an addiction slowly growing and eating away at us. Many of us might find ourselves with an obsession to check every notification and anxious when we are not online. This can breed anxiety, sleep disturbances,lack of focus and reduced productivity which may in turn contribute to a dysregulated nervous system.
+          <p>
+            ● Body negativity
+          This is mainly for the female population. It is not uncommon for the plus size women to be body shammed on social media platforms through negative comments and abusive words forgetting that we do not chose the bodies we are given. Also with tonnes of images of what an ideal body should look like for a women, this can cause depression, low self esteem and negative self talk.
           <p> 
             ● Cyberbullying
           Negative comments that aim to put people down when they post something can affect ones emotional health leading to depression and anxiety. This is all because most people in the comment section lack empathy, kindness but have alot of bitterness, anger, and negativity to give.</p>
