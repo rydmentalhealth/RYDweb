@@ -50,7 +50,7 @@ const Hero = () => {
                   </p>
                   <p>
                     <span className="mr-2" role="img" aria-label="Uganda flag">🇺🇬</span>
-                    <span className="font-semibold">Luganda:</span> Tukwaniliza ku RYD – Abawejjere, Abavubuka n’Abantu abalina obulemu. Tukulembeza okubudabudda, okusaba, okujjanjaba n’obukugu okuzza essuubi n’obuwanguzi mu bulamu bwabwe.
+                    <span className="font-semibold">Luganda:</span> Tukwaniliza ku RYD – "Abawejjere, Abavubuka n’Abantu abalina obulemu." Tukulembeza okubudabudda, okusaba, okujjanjaba n’obukugu okuzza essuubi n’obuwanguzi mu bulamu bwabwe.
                   </p>
                   <p>
                     <span className="mr-2" role="img" aria-label="France flag">🇫🇷</span>
