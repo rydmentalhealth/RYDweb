@@ -1,9 +1,9 @@
-# Restore Your Dignity (RYD)
+# RefugeesYouth PWDs (RYD)
 
-A modern, responsive website for Restore Your Dignity, an organization dedicated to supporting mental health and well-being through community and resources.
+A modern, responsive website for RYD Mental Health, an organization dedicated to supporting mental health and well-being through community and resources.
 
 ## 🌐 Live Website
-Visit our website at: [ryd.org](https://ryd.org)
+Visit our website at: [rydmentalhealth.org](https://rydmentalhealth.org)
 
 ## 🚀 Features
 
@@ -63,9 +63,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🤝 Contact
 
 For any questions or support, please contact us at:
-- Email: support@ryd.org
-- Phone: +256 776 803262
-- Address: 123 Wellness Street, Mental Health City, MH 12345
+- Email: info@rydmentalhealth.org
+- Phone: +256 776 803262/ +256740929848/ +256709039595
+- Address: Namugongo, Wakiso, Uganda. 
+P.O Box 187215 Kampala GPO
 
 ---
 
