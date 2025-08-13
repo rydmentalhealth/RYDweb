@@ -1,4 +1,4 @@
-# RefugeesYouth PWDs (RYD)
+# Refugees Youth & PWDs (RYD)
 
 A modern, responsive website for RYD Mental Health, an organization dedicated to supporting mental health and well-being through community and resources.
 
