@@ -84,22 +84,22 @@ const team = [
 
 const milestones = [
   {
-    year: '2015',
+    year: '2023',
     title: 'Foundation',
     description: 'RYD was established with a vision to transform mental health support.'
   },
   {
-    year: '2018',
+    year: '2024',
     title: 'Community Growth',
     description: 'Expanded to serve over 1,000 individuals through our programs.'
   },
   {
-    year: '2020',
+    year: '2025',
     title: 'Digital Innovation',
     description: 'Launched our online support platform and virtual counseling services.'
   },
   {
-    year: '2023',
+    year: '2026',
     title: 'National Recognition',
     description: 'Received multiple awards for excellence in mental health services.'
   }
