@@ -32,18 +32,31 @@ const Hero = () => {
                 className="inline-flex items-center px-4 py-2 rounded-full bg-primary-50 text-primary-600 mb-6"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                <span className="text-sm font-medium">Bringing Therapy Closer to You</span>
+                <span className="text-sm font-medium">Healing begins with faith</span>
               </motion.div>
 
               <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                <span className="block">RYD</span>
-                <span className="block text-primary-600">Mental Health Organization</span>
+                <span className="block">Welcome to RYD – Refugees, Youth, and Persons with Disabilities</span>
               </h1>
 
-              <p className="mt-6 text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">
-              Empowering individuals to reclaim their mental well-being through faith-based therapy, telehealth counseling, support groups, self-help resources, peer support, rehabilitation, and spiritual reintegration. 
+                              <p className="mt-6 text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">
+                  We are a faith-based mental health organization committed to promoting healing, resilience, and inclusion among refugees, youth, and persons with disabilities. At RYD, we combine spiritual support with professional care to restore mental wellness, dignity, and hope for those facing life’s hardest challenges.
+                </p>
 
-              </p>
+                <div className="mt-6 space-y-3 text-sm text-gray-600 max-w-2xl mx-auto lg:mx-0">
+                  <p>
+                    <span className="mr-2" role="img" aria-label="Kenya flag">🇰🇪</span>
+                    <span className="font-semibold">Kiswahili:</span> Karibu RYD – Wakimbizi, Vijana, na Watu wenye Ulemavu. RYD inachanganya msaada wa kiroho na huduma ya kitaalamu ili kurejesha afya ya akili, heshima, na tumaini kwa wale wanaopitia changamoto kubwa maishani.
+                  </p>
+                  <p>
+                    <span className="mr-2" role="img" aria-label="Uganda flag">🇺🇬</span>
+                    <span className="font-semibold">Luganda:</span> Tukusanyizza RYD – Abawejjere, Abavubuka n’Abantu abalina obulemu. Tuyung’anya okusaba, okujjanjaba n’obukugu okuzza essuubi n’obuwanguzi mu bulamu bwabwe.
+                  </p>
+                  <p>
+                    <span className="mr-2" role="img" aria-label="France flag">🇫🇷</span>
+                    <span className="font-semibold">Français:</span> Bienvenue chez RYD – Réfugiés, Jeunes et Personnes Handicapées. Nous unissons la foi et le soin professionnel pour restaurer la dignité, la santé mentale et l'espérance.
+                  </p>
+                </div>
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
                   href="/get-help"

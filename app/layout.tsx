@@ -6,8 +6,8 @@ import { NextAuthProvider } from "@/components/providers/auth-provider";
 import { ReactQueryProvider } from "@/lib/query-client";
 
 export const metadata: Metadata = {
-  title: "Refugee Young Adults (PWDs)",
-  description: "Supporting mental health and well-being through community and resources.",
+  title: "RYD – Refugees, Youth, and Persons with Disabilities",
+  description: "Faith-based mental health care for refugees, youth, and persons with disabilities. Healing begins with faith.",
 };
 
 export default function RootLayout({

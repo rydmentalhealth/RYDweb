@@ -18,28 +18,52 @@ import Footer from '../components/Footer';
 
 const values = [
   {
-    title: 'Compassion',
-    description: 'We approach every individual with empathy, understanding, and genuine care.',
+    title: 'Faith-Inspired Compassion',
+    description: 'We serve with the love of God, seeing every individual as created in His image. Our faith drives us to offer care, comfort, and empathy without judgment.',
     icon: Heart,
     color: 'red'
   },
   {
-    title: 'Community',
-    description: 'Building supportive networks and fostering connections for collective healing.',
+    title: 'Dignity for All',
+    description: 'We uphold the inherent worth of every person regardless of status, ability, background, or experience. Every life is valuable and deserving of respect and mental wellness.',
+    icon: Award,
+    color: 'yellow'
+  },
+  {
+    title: 'Inclusion and Accessibility',
+    description: 'We are committed to creating safe, inclusive spaces where refugees, youth, and persons with disabilities feel seen, heard, and supported without barriers.',
     icon: Users,
     color: 'blue'
   },
   {
-    title: 'Excellence',
-    description: 'Delivering high-quality, evidence-based mental health support and services.',
-    icon: Star,
-    color: 'yellow'
+    title: 'Holistic Healing',
+    description: 'We believe true healing addresses the mind, body, and spirit. Our approach integrates psychological care, spiritual support, and community strength.',
+    icon: Lightbulb,
+    color: 'green'
   },
   {
-    title: 'Integrity',
-    description: 'Operating with transparency, honesty, and ethical principles.',
+    title: 'Integrity and Accountability',
+    description: 'We hold ourselves to high ethical standards in all we do — acting with honesty, transparency, and responsibility in service and leadership.',
     icon: Shield,
-    color: 'green'
+    color: 'purple'
+  },
+  {
+    title: 'Empowerment through Service',
+    description: 'We walk alongside individuals and communities to build resilience, self-worth, and purpose, empowering them to become agents of change in their own lives.',
+    icon: ArrowRight,
+    color: 'indigo'
+  },
+  {
+    title: 'Advocacy and Justice',
+    description: 'We raise our voice for those who are often unheard, challenging stigma, discrimination, and injustice in mental health and disability care.',
+    icon: Target,
+    color: 'pink'
+  },
+  {
+    title: 'Community and Partnership',
+    description: 'We grow stronger together, partnering with families, faith communities, health professionals, and local leaders to expand care and impact.',
+    icon: Handshake,
+    color: 'teal'
   }
 ];
 
@@ -169,8 +193,8 @@ export default function AboutPage() {
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
                 Our Story
               </h1>
-              <p className="text-xl text-gray-600">
-                Dedicated to transforming lives through comprehensive mental health support and community engagement.
+                            <p className="text-xl text-gray-600">
+                A faith-driven mental health mission serving refugees, youth, and persons with disabilities through compassionate, culturally-sensitive, and spiritually-grounded care.
               </p>
             </motion.div>
           </div>
@@ -187,23 +211,32 @@ export default function AboutPage() {
                 transition={{ duration: 0.5 }}
               >
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                  Our Mission
+                  About Us
                 </h2>
                 <p className="text-xl text-gray-600 mb-6">
-                  At RYD, we're committed to restoring dignity and hope through accessible, compassionate mental health support. We believe that everyone deserves access to quality mental health care and a supportive community.
+                  RYD (Refugees, Youth, and Persons with Disabilities) is a faith-based mental health organization dedicated to restoring hope, dignity, and healing in the lives of vulnerable communities. Guided by compassion and rooted in faith, we serve refugees, youth, and persons with disabilities, recognizing their unique challenges and strengths.
+                </p>
+                <p className="text-xl text-gray-600 mb-6">
+                  We believe that mental wellness is a God-given right, not a privilege. Our mission is to bridge the gap in mental health care by offering holistic, culturally-sensitive, and spiritually-grounded support through therapy (online and in-person), community outreach, education, and advocacy.
+                </p>
+                <p className="text-xl text-gray-600 mb-6">
+                  We walk alongside individuals and families, helping them overcome trauma, displacement, stigma, and exclusion. Through partnerships, prayer, and professional care, we empower people to reclaim their voices, rebuild their lives, and rise with resilience.
+                </p>
+                <p className="text-xl text-gray-600 mb-6">
+                  Whether in crisis or on a journey of growth, RYD is a safe place to be heard, to heal, and to hope.
                 </p>
                 <div className="space-y-4">
                   <div className="flex items-start space-x-3">
-                    <Target className="h-6 w-6 text-primary-600 mt-1" />
-                    <p className="text-gray-600">Providing comprehensive mental health support services</p>
+                    <Heart className="h-6 w-6 text-primary-600 mt-1" />
+                    <p className="text-gray-600">Therapy (Online and In-person)</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Users className="h-6 w-6 text-primary-600 mt-1" />
+                    <p className="text-gray-600">Community outreach and support</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Lightbulb className="h-6 w-6 text-primary-600 mt-1" />
-                    <p className="text-gray-600">Fostering innovation in mental health care delivery</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Handshake className="h-6 w-6 text-primary-600 mt-1" />
-                    <p className="text-gray-600">Building strong, supportive communities</p>
+                    <p className="text-gray-600">Education and advocacy</p>
                   </div>
                 </div>
               </motion.div>
@@ -236,7 +269,7 @@ export default function AboutPage() {
               className="text-center max-w-3xl mx-auto mb-16"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                Our Values
+                Core Values of RYD
               </h2>
               <p className="text-xl text-gray-600">
                 The principles that guide our work and shape our impact on the community.
