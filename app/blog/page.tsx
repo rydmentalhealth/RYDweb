@@ -108,7 +108,7 @@ function Section({
 export default function BlogPage() {
   const [openPostIds, setOpenPostIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<'all' | 'updates' | 'communications' | 'articles'>('all');
+  const [category, setCategory] = useState<'all' | 'updates' | 'communications' | 'articles' | 'poems'>('all');
 
   const toggle = (key: string) => {
     setOpenPostIds((prev) => {
@@ -245,6 +245,9 @@ Oh, I'm pretty sure they do
 As I struggle to contain my quivers 
 when it's suddenly my cue.
           </p>
+          <p>
+            When you feel overwhelmed, this simple reset helps you come back to center, steady your breath, and soften your inner voice.
+          </p>
           <ol>
             <li>My mind goes blank, I freeze.
 A dozen tabs swing open, Each one vying for space,
@@ -263,7 +266,53 @@ Don't let your mind reel.
 You've got this.
 Just brace yourself and be still!
           </ol>
+          <p>
+            Tip: Pair your practice with something you already do (like making tea or locking your phone) so it sticks with ease.
+          </p>
         </div>
+      ),
+    },
+  ];
+
+  // Poems
+  const poemsPosts: Post[] = [
+    {
+      id: 'p1',
+      title: 'Still in the Spotlight',
+      date: '2025-08-12',
+      summary: 'A tender, honest reflection on speaking up while navigating social anxiety.',
+      content: (
+        <article>
+          <p className="text-sm text-gray-500">by Fatma Khamis Muhammad, volunteer at RYD</p>
+          <div className="mt-4 space-y-3 leading-relaxed">
+            <p>I wonder if they notice.<br />
+            Oh, I&apos;m pretty sure they do — as I struggle to contain my quivers when it&apos;s suddenly my cue.</p>
+
+            <p>My mind goes blank,<br />
+            I freeze.</p>
+
+            <p>A dozen tabs swing open, each one vying for space,<br />
+            Each thought desperate to plead its case,<br />
+            In the courtroom of my face.</p>
+
+            <p>&quot;Am I slouching?&quot;<br />
+            &quot;You&apos;re blabbering.&quot;<br />
+            &quot;Your voice? Way too high pitched.&quot;<br />
+            &quot;They don&apos;t get what you&apos;re saying so you might as well just ditch.&quot;</p>
+
+            <p>And just when I feel the slip —<br />
+            that ache of doubt, that sinking grip —<br />
+            zoned out; I try zoning in.</p>
+
+            <p>• I draw a trembling breath and narrow my scope within.<br />
+            You&apos;re here.<br />
+            Don&apos;t let your mind reel.<br />
+            You&apos;ve got this.<br />
+            Just brace yourself and be still!</p>
+
+            <p className="text-sm italic text-gray-500">(For anyone who has/ is struggling with social axiety)</p>
+          </div>
+        </article>
       ),
     },
   ];
@@ -280,6 +329,7 @@ Just brace yourself and be still!
   const filteredUpdates = useMemo(() => updatesPosts.filter(matchesQuery), [normalizedQuery]);
   const filteredComm = useMemo(() => commPosts.filter(matchesQuery), [normalizedQuery]);
   const filteredArticles = useMemo(() => articlesPosts.filter(matchesQuery), [normalizedQuery]);
+  const filteredPoems = useMemo(() => poemsPosts.filter(matchesQuery), [normalizedQuery]);
 
   return (
     <>
@@ -311,6 +361,7 @@ Just brace yourself and be still!
                     <SelectItem value="updates">Updates</SelectItem>
                     <SelectItem value="communications">Communications & Announcements</SelectItem>
                     <SelectItem value="articles">Articles</SelectItem>
+                    <SelectItem value="poems">Poems</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -346,6 +397,17 @@ Just brace yourself and be still!
             title="Articles"
             description="Thought pieces, guides, and educational content written by our team and partners."
             posts={filteredArticles}
+            openSet={openPostIds}
+            toggle={toggle}
+          />
+        ) : null}
+
+        {category === 'all' || category === 'poems' ? (
+          <Section
+            sectionKey="poems"
+            title="Poems"
+            description="Original poetry and creative writing from our community."
+            posts={filteredPoems}
             openSet={openPostIds}
             toggle={toggle}
           />
