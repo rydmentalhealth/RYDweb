@@ -200,26 +200,36 @@ export default function BlogPage() {
     {
       id: 'a1',
       title: 'THE NEGATIVE IMPACT OF SOCIAL MEDIA ON MENTAL HEALTH BY NAMUYANJA ANNAH VERONICA',
-      date: '2025-03-08',
-      summary: 'While social media is part of the modern day life and has it’s positive impact, it poses a threat to mental health especially if you are not well grounded. Social media creates an ideal life through images on instagram,content on tiktok and through the unsolicited advise that tons of people have to give. This ideal life that is painted creates issues of fomo( fear of missing out), comparison which breeds lack of being content,social media addiction, body negativity, cyberbullying to mention but a few. Let us unpack them one by one.',
+      date: '2025-08-08',
+      summary: 'While social media is part of the modern day life and has it’s positive impact, it poses a threat to mental health especially if you are not well grounded. 
+Social media creates an ideal life through images on instagram,content on tiktok and through the unsolicited advise that tons of people have to give. This ideal life that is painted creates issues of fomo( fear of missing out), comparison which breeds lack of being content,social media addiction, body negativity, cyberbullying to mention but a few. 
+Let us unpack them one by one.',
       content: (
         <div>
           <p>
             ● Fear of missing out and comparison
+
 Exposure to content on social media inform of concerts, brunch, relationships, achievements can lead to anxiety from the fear of missing out on such a life and events. Often times, this leads to comparison due to feeling inadequate and feeling like one's life is incomplete and is missing something forgetting that sometimes this content does not show the behind the scenes and may sometimes be exaggerated or incomplete considering most people share the perfect and happy snippets of their lives.
+
 ● Social media addiction
 Many of us spend countless hours on social media platforms scrolling away like our life depends on it not realizing that this is an addiction slowly growing and eating away at us. Many of us might find ourselves with an obsession to check every notification and anxious when we are not online. This can breed anxiety, sleep disturbances,lack of focus and reduced productivity which may in turn contribute to a dysregulated nervous system.
+
 ● Body negativity
 This is mainly for the female population. It is not uncommon for the plus size women to be body shammed on social media platforms through negative comments and abusive words forgetting that we do not chose the bodies we are given. Also with tonnes of images of what an ideal body should look like for a women, this can cause depression, low self esteem and negative self talk.
+
 ● Cyberbullying
 Negative comments that aim to put people down when they post something can affect ones emotional health leading to depression and anxiety. This is all because most people in the comment section lack empathy, kindness but have alot of bitterness, anger, and negativity to give.
           </p>
           <p>
             While this negative impact stands, we can use social media better to mitigate these negative effects through;
+
 ● Showing kindness through our comments or saying nothing at all if you do not have anything positive or kind to say.
+
 ● Curating your feed. Following accounts that uplift and inspire you and unfollowing any accounts that have triggering content.
+
 ● Social media detoxes every once in a while. Taking time off social media every now and then to reset and to make time for yourself.
-● Setting time limits using in built app timers
+
+● Setting time limits using in built app timers.
 Written by NAMUYANJA ANNAH VERONICA.
           </p>
         </div>
@@ -227,19 +237,35 @@ Written by NAMUYANJA ANNAH VERONICA.
     },
     {
       id: 'a2',
-      title: 'Mindfulness Basics: Getting Started',
-      date: '2025-02-14',
-      summary: 'An approachable introduction to mindfulness with short daily practices you can try today.',
+      title: 'Still in the Spotlight:
+(by Fatma Khamis Muhammad, volunteer at RYD',
+      date: '2025-07-14',
+      summary: 'For anyone who has/ is struggling with social axiety.',
       content: (
         <div>
           <p>
-            Mindfulness is about paying attention to the present moment with curiosity and without judgment. Start small:
-            two minutes of breathing, noticing sensations, and returning when your mind wanders.
+            I wonder if they notice.
+Oh, I'm pretty sure they do - 
+As I struggle to contain my quivers 
+when it's suddenly my cue.
           </p>
           <ol>
-            <li>Begin with a short breathing exercise</li>
-            <li>Use gentle reminders to pause during your day</li>
-            <li>Reflect briefly on what felt supportive</li>
+            <li>My mind goes blank, I freeze.
+A dozen tabs swing open, Each one vying for space,
+Each though desperate to plead its case, In the courtroom of my face.</li>
+            <li>"Am I slouching?"
+"You're blabbering."
+"Your voice? Way too high pitched."
+"They don't get what you're saying so you might as well just ditch."</li>
+            <li>And just when I feel the slip, 
+That ache of doubt, that sinking grip, 
+Zoned out; I try zoning in.
+I draw a trembling breath and narrow my scope within.</li>
+You're here.
+
+Don't let your mind reel.
+You've got this.
+Just brace yourself and be still!
           </ol>
         </div>
       ),
