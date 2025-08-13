@@ -120,3 +120,22 @@ If users are having issues with authentication in production:
 - Check the deployment logs in the Vercel dashboard
 - Verify that all environment variables are correctly set
 - Make sure any file path references are compatible with Vercel's serverless environment 
+
+### Required environment variables
+
+- AUTH_SECRET: 32+ chars (use: `openssl rand -base64 32`)
+- AUTH_URL: Your production origin, e.g. https://your-domain.com
+- NEXTAUTH_URL: Same origin (fallback used)
+- DATABASE_URL: Postgres connection string
+- NODE_ENV=production
+
+Optional:
+- NEXT_PUBLIC_EMAIL_SIGNIN_ENABLED=true (only if Email provider is configured)
+- GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET (if enabling Google)
+- APPLE_CLIENT_ID / APPLE_CLIENT_SECRET (if enabling Apple)
+
+Ensure you run Prisma migrations in production:
+
+```bash
+npx prisma migrate deploy
+``` 

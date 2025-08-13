@@ -143,3 +143,19 @@ npx prisma db seed
 3. Check all API endpoints
 4. Test user registration and login
 5. Monitor error logs in Vercel dashboard 
+
+## Deploy Hooks and DB migrations
+
+- Ensure Prisma Client is generated and migrations applied on deploy. You can set a Build Command in your platform to:
+
+```bash
+npx prisma generate && npx prisma migrate deploy && NEXT_SKIP_ESLINT=1 NEXT_SKIP_TYPE_CHECK=1 next build --no-lint
+```
+
+- If you do not use email link authentication, keep it disabled. To enable it explicitly:
+
+```
+NEXT_PUBLIC_EMAIL_SIGNIN_ENABLED=true
+```
+
+If enabled, you must configure a NextAuth Email provider (SMTP) accordingly. 

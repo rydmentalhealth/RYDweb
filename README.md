@@ -71,3 +71,34 @@ P.O Box 187215 Kampala GPO
 ---
 
 Made with ❤️ by the RYD Team
+
+## Quickstart
+
+1) Create `.env` with the minimum config for local dev:
+
+```
+AUTH_SECRET=development-secret-change-in-production
+NEXTAUTH_URL=http://localhost:3000
+DATABASE_URL="postgresql://username:password@localhost:5432/db?schema=public"
+```
+
+2) Generate Prisma client and migrate:
+
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+```
+
+3) Verify auth config:
+
+```bash
+npm run verify:auth
+```
+
+4) Start dev server:
+
+```bash
+npm run dev
+```
+
+Email-link login is disabled by default in the UI unless `NEXT_PUBLIC_EMAIL_SIGNIN_ENABLED=true` is set and the Email provider is configured.
