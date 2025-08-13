@@ -85,7 +85,7 @@ export default function WriteToRestorePage() {
               >
                 <div className="relative h-[400px] rounded-xl overflow-hidden shadow-2xl">
                   <Image
-                    src="/images/write-to-restore-hero.jpg" // Placeholder image path
+                    src="/public/IMG_6841.jpeg" // Placeholder image path
                     alt="Write to Restore Program"
                     fill
                     className="object-cover"
