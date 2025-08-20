@@ -70,13 +70,13 @@ const values = [
 const team = [
   {
     name: 'Shalom Omondo',
-    role: 'Co-Founder & Executive Director',
+    role: 'Founder & Executive Director',
     image: '/MariamNakatudde2.jpeg',
     bio: 'A passionate mental health advocate with over 5 years of experience working with mental health organizations. Her dedication to transforming lives through accessible mental healthcare and community support has helped countless individuals on their healing journey.'
   },
   {
     name: 'Augustus Twinemugabe',
-    role: 'Co - Founder & Marketing Director',
+    role: 'Co-Founder & Marketing Director',
     image: '/AugustusTwinemugabe.jpeg',
     bio: 'Leading the organization\'s creative direction and outreach strategies. He also guides community programs and support initiatives with passion and expertise, working to create safe, inclusive spaces for healing.'
   }
