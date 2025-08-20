@@ -76,7 +76,7 @@ const team = [
   },
   {
     name: 'Augustus Twinemugabe',
-    role: 'Co-Founder & Marketing Director',
+    role: 'Co - Founder & Marketing Director',
     image: '/AugustusTwinemugabe.jpeg',
     bio: 'Leading the organization\'s creative direction and outreach strategies. He also guides community programs and support initiatives with passion and expertise, working to create safe, inclusive spaces for healing.'
   }
