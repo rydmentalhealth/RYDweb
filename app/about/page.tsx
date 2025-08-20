@@ -101,7 +101,7 @@ const milestones = [
   {
     year: '2026',
     title: 'National Recognition',
-    description: 'Received multiple awards for excellence in mental health services.'
+    description: 'Receive multiple awards for excellence in mental health services.'
   }
 ];
 
