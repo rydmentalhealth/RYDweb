@@ -47,7 +47,7 @@ const contactMethods = [
     icon: MapPin,
     color: "text-red-600",
     bgColor: "bg-red-100",
-    contact: "Visit us at our office",
+    contact: "Visit us today at our office",
   },
 ];
 
@@ -64,7 +64,7 @@ const features = [
   },
   {
     title: 'Professional Team',
-    description: 'Experienced mental health professionals',
+    description: 'Experienced and passionate mental health professionals',
     icon: CheckCircle2
   }
 ];
