@@ -23,7 +23,7 @@ const contactMethods = [
     icon: Phone,
     color: "text-blue-600",
     bgColor: "bg-blue-100",
-    contact: "+256 709 039595 / +256 776 803262",
+    contact: "+256 709 039595 / +256 740929848",
   },
   {
     title: "Email",
