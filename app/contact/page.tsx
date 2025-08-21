@@ -64,7 +64,7 @@ const features = [
   },
   {
     title: 'Professional Team',
-    description: 'Experienced mental health professionals',
+    description: 'Experienced and passionate mental health professionals',
     icon: CheckCircle2
   }
 ];
