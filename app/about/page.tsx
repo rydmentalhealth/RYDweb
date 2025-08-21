@@ -70,7 +70,7 @@ const values = [
 const team = [
   {
     name: 'Shalom Omondo',
-    role: 'Co-Founder & Executive Director',
+    role: 'Executive Director',
     image: '/MariamNakatudde2.jpeg',
     bio: 'A passionate mental health advocate with over 5 years of experience working with mental health organizations. Her dedication to transforming lives through accessible mental healthcare and community support has helped countless individuals on their healing journey.'
   },
