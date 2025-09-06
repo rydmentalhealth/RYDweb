@@ -81,6 +81,13 @@ const team = [
     bio: 'Leading the organization\'s creative direction and outreach strategies. He also guides community programs and support initiatives with passion and expertise, working to create safe, inclusive spaces for healing.'
   }
 ];
+{
+    name: 'Namuyanja Annah Veronica',
+    role: 'Cheif Operating Officer',
+    image: '/AugustusTwinemugabe.jpeg',
+    bio: 'Leading the organization\'s creative direction and outreach strategies. He also guides community programs and support initiatives with passion and expertise, working to create safe, inclusive spaces for healing.'
+  }
+];
 
 const milestones = [
   {
