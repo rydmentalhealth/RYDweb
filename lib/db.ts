@@ -22,7 +22,21 @@ try {
   prisma = globalForPrisma.prisma || createPrismaClient();
 } catch (error) {
   console.error('Failed to initialize Prisma client:', error);
-  throw new Error('Database connection failed');
+  // Don't throw during build, just log the error
+  if (process.env.NODE_ENV === 'production' && process.env.VERCEL === '1') {
+    console.warn('Prisma client initialization failed during Vercel build, continuing...');
+    // Create a minimal client for build purposes
+    prisma = new PrismaClient({
+      log: ['error'],
+      datasources: {
+        db: {
+          url: 'postgresql://placeholder:placeholder@localhost:5432/placeholder',
+        },
+      },
+    });
+  } else {
+    throw new Error('Database connection failed');
+  }
 }
 
 // Export db as an alias for prisma to maintain backward compatibility

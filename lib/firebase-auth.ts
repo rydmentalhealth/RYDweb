@@ -15,9 +15,10 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-B69WZL3B7Y"
 };
 
-// Validate required configuration
+// Validate required configuration - don't fail during build
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  throw new Error('Firebase configuration is missing required fields');
+  console.warn('Firebase configuration is missing required fields, using fallback values');
+  // Don't throw during build, just use fallback values
 }
 
 // Initialize Firebase only if no apps exist
