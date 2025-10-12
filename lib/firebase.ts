@@ -2,6 +2,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
+// Firebase configuration with proper validation
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCaFRSfeZGvQFaaE8KzhPFsvag2hkIO6Ck",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "rydadmin-hub.firebaseapp.com",
@@ -12,11 +13,29 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-B69WZL3B7Y"
 };
 
+// Validate required configuration
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  throw new Error('Firebase configuration is missing required fields');
+}
+
 // Initialize Firebase only if no apps exist
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+let app;
+try {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+  throw error;
+}
 
-// Initialize Firebase services
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+// Initialize Firebase services with error handling
+let db, auth;
+try {
+  db = getFirestore(app);
+  auth = getAuth(app);
+} catch (error) {
+  console.error('Firebase services initialization error:', error);
+  throw error;
+}
 
+export { db, auth };
 export default app;

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
+import ErrorBoundary from '@/components/error-boundary';
 
 interface FirebaseLoginFormProps {
   onSuccess?: (user: any) => void;
@@ -69,14 +70,15 @@ export function FirebaseLoginForm({ onSuccess, onError }: FirebaseLoginFormProps
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Firebase Authentication</CardTitle>
-        <CardDescription>
-          Sign in or create an account using Firebase
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <ErrorBoundary>
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle>Firebase Authentication</CardTitle>
+          <CardDescription>
+            Sign in or create an account using Firebase
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -173,7 +175,8 @@ export function FirebaseLoginForm({ onSuccess, onError }: FirebaseLoginFormProps
             <AlertDescription>{success}</AlertDescription>
           </Alert>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </ErrorBoundary>
   );
 }

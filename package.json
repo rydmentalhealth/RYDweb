@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/validate-env.js && next build",
     "build:quick": "TS_NODE_TRANSPILE_ONLY=true next build --no-lint",
     "build:skip-checks": "NEXT_SKIP_TYPE_CHECK=true next build --no-lint",
     "start": "next start",
     "lint": "next lint",
     "verify:auth": "node scripts/verify-auth-config.js",
-    "postinstall": "npx prisma generate"
+    "validate:env": "node scripts/validate-env.js"
   },
   "dependencies": {
     "@auth/core": "^0.39.1",
