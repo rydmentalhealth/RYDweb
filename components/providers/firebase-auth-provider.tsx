@@ -30,12 +30,29 @@ export function FirebaseAuthProvider({ children }: FirebaseAuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChange((user) => {
-      setUser(user);
+    // Only run on client side
+    if (typeof window === 'undefined') {
       setLoading(false);
-    });
+      return;
+    }
 
-    return () => unsubscribe();
+    let unsubscribe: (() => void) | undefined;
+
+    try {
+      unsubscribe = onAuthStateChange((user) => {
+        setUser(user);
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error('Firebase auth error:', error);
+      setLoading(false);
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   return (

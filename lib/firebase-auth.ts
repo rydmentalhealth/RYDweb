@@ -9,7 +9,7 @@ import {
   sendEmailVerification
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { auth, db } from './firebase-client';
 
 export interface FirebaseUser {
   uid: string;
@@ -23,6 +23,10 @@ export interface FirebaseUser {
 
 // Sign in with email and password
 export const signInWithEmail = async (email: string, password: string) => {
+  if (typeof window === 'undefined') {
+    throw new Error('Firebase auth can only be used on the client side');
+  }
+
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -55,6 +59,10 @@ export const createUserWithEmail = async (
   role: string = 'STAFF',
   status: string = 'ACTIVE'
 ) => {
+  if (typeof window === 'undefined') {
+    throw new Error('Firebase auth can only be used on the client side');
+  }
+
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -92,6 +100,10 @@ export const createUserWithEmail = async (
 
 // Sign out
 export const signOutUser = async () => {
+  if (typeof window === 'undefined') {
+    throw new Error('Firebase auth can only be used on the client side');
+  }
+
   try {
     await signOut(auth);
   } catch (error: any) {
@@ -101,11 +113,18 @@ export const signOutUser = async () => {
 
 // Get current user
 export const getCurrentUser = (): User | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
   return auth.currentUser;
 };
 
 // Listen to auth state changes
 export const onAuthStateChange = (callback: (user: FirebaseUser | null) => void) => {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+
   return onAuthStateChanged(auth, async (user) => {
     if (user) {
       // Get additional user data from Firestore
@@ -142,6 +161,10 @@ export const onAuthStateChange = (callback: (user: FirebaseUser | null) => void)
 
 // Send password reset email
 export const sendPasswordReset = async (email: string) => {
+  if (typeof window === 'undefined') {
+    throw new Error('Firebase auth can only be used on the client side');
+  }
+
   try {
     await sendPasswordResetEmail(auth, email);
   } catch (error: any) {
@@ -151,6 +174,10 @@ export const sendPasswordReset = async (email: string) => {
 
 // Send email verification
 export const sendEmailVerificationToUser = async () => {
+  if (typeof window === 'undefined') {
+    throw new Error('Firebase auth can only be used on the client side');
+  }
+
   try {
     const user = auth.currentUser;
     if (user) {
@@ -163,6 +190,10 @@ export const sendEmailVerificationToUser = async () => {
 
 // Update user profile in Firestore
 export const updateUserProfile = async (uid: string, data: Partial<FirebaseUser>) => {
+  if (typeof window === 'undefined') {
+    throw new Error('Firebase auth can only be used on the client side');
+  }
+
   try {
     await updateDoc(doc(db, 'users', uid), {
       ...data,
