@@ -1,0 +1,63 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Admin users collection - only authenticated admins can access
+    match /adminUsers/{userId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role in ['admin', 'super_admin'];
+    }
+    
+    // Staff users collection - authenticated staff and admins can access
+    match /staffUsers/{userId} {
+      allow read, write: if request.auth != null 
+        && (request.auth.uid == userId 
+            || get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role in ['admin', 'super_admin']);
+    }
+    
+    // Admin dashboard data - only admins can access
+    match /adminDashboard/{document} {
+      allow read, write: if request.auth != null 
+        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role in ['admin', 'super_admin'];
+    }
+    
+    // Staff dashboard data - staff and admins can access
+    match /staffDashboard/{document} {
+      allow read, write: if request.auth != null 
+        && (get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role in ['admin', 'super_admin']
+            || get(/databases/$(database)/documents/staffUsers/$(request.auth.uid)).data.role in ['staff', 'manager']);
+    }
+    
+    // User management - only admins can access
+    match /users/{userId} {
+      allow read, write: if request.auth != null 
+        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role in ['admin', 'super_admin'];
+    }
+    
+    // System settings - only super admins can access
+    match /systemSettings/{document} {
+      allow read, write: if request.auth != null 
+        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role == 'super_admin';
+    }
+    
+    // Audit logs - only admins can read, no one can write directly
+    match /auditLogs/{logId} {
+      allow read: if request.auth != null 
+        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role in ['admin', 'super_admin'];
+      allow write: if false; // Only server-side functions can write audit logs
+    }
+    
+    // Public data that doesn't require authentication (if any)
+    match /publicData/{document} {
+      allow read: if true;
+      allow write: if request.auth != null 
+        && get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role in ['admin', 'super_admin'];
+    }
+    
+    // Default deny rule for any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
