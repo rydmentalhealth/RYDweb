@@ -5,13 +5,28 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 
 const {
+  PrismaClientKnownRequestError,
+  PrismaClientUnknownRequestError,
+  PrismaClientRustPanicError,
+  PrismaClientInitializationError,
+  PrismaClientValidationError,
+  getPrismaClient,
+  sqltag,
+  empty,
+  join,
+  raw,
+  skip,
   Decimal,
+  Debug,
   objectEnumValues,
   makeStrictEnum,
+  Extensions,
+  warnOnce,
+  defineDmmfProperty,
   Public,
   getRuntime,
-  skip
-} = require('./runtime/index-browser.js')
+  createParam,
+} = require('./runtime/wasm-engine-edge.js')
 
 
 const Prisma = {}
@@ -20,79 +35,35 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.14.0
- * Query Engine version: 717184b7b35ea05dfa71a3236b7af656013e1e49
+ * Prisma Client JS version: 6.17.1
+ * Query Engine version: 272a37d34178c2894197e17273bf937f25acdeac
  */
 Prisma.prismaVersion = {
-  client: "6.14.0",
-  engine: "717184b7b35ea05dfa71a3236b7af656013e1e49"
+  client: "6.17.1",
+  engine: "272a37d34178c2894197e17273bf937f25acdeac"
 }
 
-Prisma.PrismaClientKnownRequestError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientKnownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)};
-Prisma.PrismaClientUnknownRequestError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientUnknownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientRustPanicError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientRustPanicError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientInitializationError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientInitializationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientValidationError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientValidationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
+Prisma.PrismaClientUnknownRequestError = PrismaClientUnknownRequestError
+Prisma.PrismaClientRustPanicError = PrismaClientRustPanicError
+Prisma.PrismaClientInitializationError = PrismaClientInitializationError
+Prisma.PrismaClientValidationError = PrismaClientValidationError
 Prisma.Decimal = Decimal
 
 /**
  * Re-export of sql-template-tag
  */
-Prisma.sql = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`sqltag is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.empty = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`empty is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.join = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`join is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.raw = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`raw is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.sql = sqltag
+Prisma.empty = empty
+Prisma.join = join
+Prisma.raw = raw
 Prisma.validator = Public.validator
 
 /**
 * Extensions
 */
-Prisma.getExtensionContext = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`Extensions.getExtensionContext is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.defineExtension = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`Extensions.defineExtension is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.getExtensionContext = Extensions.getExtensionContext
+Prisma.defineExtension = Extensions.defineExtension
 
 /**
  * Shorthand utilities for JSON filtering
@@ -109,10 +80,11 @@ Prisma.NullTypes = {
 
 
 
+
+
 /**
  * Enums
  */
-
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   ReadUncommitted: 'ReadUncommitted',
   ReadCommitted: 'ReadCommitted',
@@ -461,34 +433,82 @@ exports.Prisma.ModelName = {
   UserTeam: 'UserTeam',
   TaskTeam: 'TaskTeam'
 };
-
 /**
- * This is a stub Prisma Client that will error at runtime if called.
+ * Create the Client
  */
-class PrismaClient {
-  constructor() {
-    return new Proxy(this, {
-      get(target, prop) {
-        let message
-        const runtime = getRuntime()
-        if (runtime.isEdge) {
-          message = `PrismaClient is not configured to run in ${runtime.prettyName}. In order to run Prisma Client on edge runtime, either:
-- Use Prisma Accelerate: https://pris.ly/d/accelerate
-- Use Driver Adapters: https://pris.ly/d/driver-adapters
-`;
-        } else {
-          message = 'PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `' + runtime.prettyName + '`).'
-        }
-
-        message += `
-If this is unexpected, please open an issue: https://pris.ly/prisma-prisma-bug-report`
-
-        throw new Error(message)
+const config = {
+  "generator": {
+    "name": "client",
+    "provider": {
+      "fromEnvVar": null,
+      "value": "prisma-client-js"
+    },
+    "output": {
+      "value": "/workspace/app/generated/prisma-client",
+      "fromEnvVar": null
+    },
+    "config": {
+      "engineType": "library"
+    },
+    "binaryTargets": [
+      {
+        "fromEnvVar": null,
+        "value": "debian-openssl-3.0.x",
+        "native": true
       }
-    })
+    ],
+    "previewFeatures": [],
+    "sourceFilePath": "/workspace/prisma/schema.prisma",
+    "isCustomOutput": true
+  },
+  "relativeEnvPaths": {
+    "rootEnvPath": null
+  },
+  "relativePath": "../../../prisma",
+  "clientVersion": "6.17.1",
+  "engineVersion": "272a37d34178c2894197e17273bf937f25acdeac",
+  "datasourceNames": [
+    "db"
+  ],
+  "activeProvider": "postgresql",
+  "postinstall": true,
+  "inlineDatasources": {
+    "db": {
+      "url": {
+        "fromEnvVar": "DATABASE_URL",
+        "value": null
+      }
+    }
+  },
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../app/generated/prisma-client\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Account {\n  id                String  @id @default(cuid())\n  userId            String\n  type              String\n  provider          String\n  providerAccountId String\n  refresh_token     String?\n  access_token      String?\n  expires_at        Int?\n  token_type        String?\n  scope             String?\n  id_token          String?\n  session_state     String?\n  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([provider, providerAccountId])\n}\n\nmodel Session {\n  id           String   @id @default(cuid())\n  sessionToken String   @unique\n  userId       String\n  expires      DateTime\n  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n}\n\n// Unified User model that combines authentication and profile data\nmodel User {\n  id            String     @id @default(cuid())\n  // Authentication fields\n  email         String     @unique\n  emailVerified DateTime?\n  password      String?\n  role          UserRole   @default(VOLUNTEER)\n  status        UserStatus @default(PENDING)\n\n  // Profile fields (previously in TeamMember)\n  firstName        String?\n  lastName         String?\n  name             String? // Computed from firstName + lastName\n  avatar           String?\n  bio              String?\n  jobTitle         String?\n  department       String?\n  phone            String?\n  nationalId       String?\n  startDate        DateTime?\n  endDate          DateTime?\n  location         String?\n  district         String?\n  region           String?\n  languages        String?\n  skills           String?\n  emergencyContact String?\n  availability     Availability?\n  weeklyHours      Int?          @default(40)\n\n  // Authentication relations\n  accounts Account[]\n  sessions Session[]\n\n  // Application relations\n  timeEntries        TimeEntry[]\n  tasks              TaskAssignee[]\n  documents          Document[]\n  projectMemberships ProjectMember[]\n  projectsOwned      Project[]       @relation(\"ProjectOwner\")\n  comments           TaskComment[]\n  tasksCreated       Task[]          @relation(\"TaskCreator\")\n  checkIns           CheckIn[]\n  teams              UserTeam[] // New: User team memberships\n\n  // Audit fields\n  createdAt     DateTime  @default(now())\n  updatedAt     DateTime  @updatedAt\n  approvedAt    DateTime?\n  approvedById  String?\n  approvedBy    User?     @relation(\"UserApproval\", fields: [approvedById], references: [id])\n  approvedUsers User[]    @relation(\"UserApproval\")\n}\n\nmodel VerificationToken {\n  identifier String\n  token      String   @unique\n  expires    DateTime\n\n  @@unique([identifier, token])\n}\n\nenum UserRole {\n  SUPER_ADMIN\n  ADMIN\n  STAFF\n  VOLUNTEER\n}\n\nenum UserStatus {\n  PENDING // Awaiting admin approval\n  ACTIVE // Approved and active\n  INACTIVE // Temporarily deactivated\n  SUSPENDED // Suspended by admin\n  REJECTED // Application rejected\n}\n\nenum Availability {\n  FULL_TIME\n  PART_TIME\n  ON_CALL\n  FLEXIBLE\n}\n\n// Task model for assignments\nmodel Task {\n  id          String           @id @default(cuid())\n  title       String\n  description String?\n  location    String?\n  startDate   DateTime? // Start of the deadline range\n  endDate     DateTime? // End of the deadline range\n  priority    TaskPriority     @default(MEDIUM)\n  status      TaskStatus       @default(NOT_STARTED)\n  createdAt   DateTime         @default(now())\n  updatedAt   DateTime         @updatedAt\n  projectId   String?\n  project     Project?         @relation(fields: [projectId], references: [id])\n  createdById String?\n  createdBy   User?            @relation(\"TaskCreator\", fields: [createdById], references: [id])\n  attachments TaskAttachment[]\n  comments    TaskComment[]\n  timeEntries TimeEntry[]\n  completedAt DateTime?\n  assignees   TaskAssignee[] // Individual user assignments\n  teams       TaskTeam[] // Team assignments\n}\n\nenum TaskPriority {\n  LOW\n  MEDIUM\n  HIGH\n  URGENT\n}\n\nenum TaskStatus {\n  NOT_STARTED\n  IN_PROGRESS\n  COMPLETED\n  OVERDUE\n}\n\n// Task attachments model\nmodel TaskAttachment {\n  id        String   @id @default(cuid())\n  taskId    String\n  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  fileName  String\n  fileUrl   String\n  fileType  String\n  fileSize  Int?\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n\n// Task comments model\nmodel TaskComment {\n  id        String   @id @default(cuid())\n  taskId    String\n  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  authorId  String\n  author    User     @relation(fields: [authorId], references: [id])\n  content   String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n\n// Time tracking model\nmodel TimeEntry {\n  id          String    @id @default(cuid())\n  taskId      String\n  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  startTime   DateTime\n  endTime     DateTime?\n  duration    Int? // Duration in minutes\n  description String?\n  createdAt   DateTime  @default(now())\n  updatedAt   DateTime  @updatedAt\n  userId      String\n  user        User      @relation(fields: [userId], references: [id])\n}\n\n// Project model\nmodel Project {\n  id           String                 @id @default(cuid())\n  name         String                 @db.VarChar(100)\n  description  String?\n  status       ProjectStatus          @default(PLANNING)\n  priority     ProjectPriority        @default(MEDIUM)\n  startDate    DateTime?\n  endDate      DateTime?\n  budget       Float?\n  clientId     String?\n  client       Client?                @relation(fields: [clientId], references: [id])\n  ownerId      String\n  owner        User                   @relation(\"ProjectOwner\", fields: [ownerId], references: [id])\n  colorTag     String?\n  team         ProjectMember[]\n  tasks        Task[]\n  documents    Document[]\n  transactions FinancialTransaction[]\n  createdAt    DateTime               @default(now())\n  updatedAt    DateTime               @updatedAt\n}\n\nenum ProjectStatus {\n  PLANNING\n  ACTIVE\n  COMPLETED\n  ON_HOLD\n  CANCELLED\n}\n\nenum ProjectPriority {\n  LOW\n  MEDIUM\n  HIGH\n  URGENT\n}\n\n// Project members junction table\nmodel ProjectMember {\n  id        String      @id @default(cuid())\n  projectId String\n  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)\n  userId    String\n  user      User        @relation(fields: [userId], references: [id])\n  role      ProjectRole @default(MEMBER)\n  joinedAt  DateTime    @default(now())\n\n  @@unique([projectId, userId])\n}\n\nenum ProjectRole {\n  LEADER\n  COORDINATOR\n  MEMBER\n}\n\n// Attendance model\nmodel CheckIn {\n  id           String    @id @default(cuid())\n  userId       String\n  user         User      @relation(fields: [userId], references: [id])\n  checkInTime  DateTime  @default(now())\n  checkOutTime DateTime?\n  notes        String?\n  location     String?\n  createdAt    DateTime  @default(now())\n  updatedAt    DateTime  @updatedAt\n}\n\n// Task assignees junction table\nmodel TaskAssignee {\n  id         String   @id @default(cuid())\n  taskId     String\n  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  userId     String\n  user       User     @relation(fields: [userId], references: [id])\n  assignedAt DateTime @default(now())\n\n  @@unique([taskId, userId])\n}\n\n// Document Category model\nmodel DocumentCategory {\n  id          String     @id @default(cuid())\n  name        String     @unique\n  description String?\n  color       String?    @default(\"#4f46e5\")\n  createdAt   DateTime   @default(now())\n  updatedAt   DateTime   @updatedAt\n  documents   Document[]\n}\n\n// Document model\nmodel Document {\n  id           String            @id @default(cuid())\n  title        String\n  description  String?\n  fileName     String\n  fileUrl      String\n  fileType     String\n  fileSize     Int?\n  categoryId   String?\n  category     DocumentCategory? @relation(fields: [categoryId], references: [id])\n  uploadedById String\n  uploadedBy   User              @relation(fields: [uploadedById], references: [id])\n  projectId    String?\n  project      Project?          @relation(fields: [projectId], references: [id])\n  accessLevel  DocumentAccess    @default(ALL_STAFF)\n  isPublic     Boolean           @default(false)\n  tags         String?\n  createdAt    DateTime          @default(now())\n  updatedAt    DateTime          @updatedAt\n}\n\nenum DocumentAccess {\n  PUBLIC\n  ALL_STAFF\n  STAFF_ONLY\n  ADMIN_ONLY\n}\n\n// Financial transaction model\nmodel FinancialTransaction {\n  id          String          @id @default(cuid())\n  amount      Float\n  description String?\n  date        DateTime        @default(now())\n  type        TransactionType\n  category    String?\n  reference   String?\n  notes       String?\n  projectId   String?\n  project     Project?        @relation(fields: [projectId], references: [id])\n  createdAt   DateTime        @default(now())\n  updatedAt   DateTime        @updatedAt\n}\n\nenum TransactionType {\n  INCOME\n  EXPENSE\n  DONATION\n  GRANT\n}\n\n// Client model\nmodel Client {\n  id        String    @id @default(cuid())\n  name      String\n  email     String?\n  phone     String?\n  address   String?\n  website   String?\n  notes     String?\n  projects  Project[]\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n}\n\n// Team model for organizational structure\nmodel Team {\n  id          String   @id @default(cuid())\n  name        String   @unique\n  description String?\n  color       String?  @default(\"#4f46e5\")\n  icon        String? // Icon name for UI display\n  isActive    Boolean  @default(true)\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n\n  // Relations\n  members UserTeam[]\n  tasks   TaskTeam[]\n}\n\n// User-Team junction table (many-to-many)\nmodel UserTeam {\n  id       String   @id @default(cuid())\n  userId   String\n  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n  teamId   String\n  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)\n  role     TeamRole @default(MEMBER)\n  joinedAt DateTime @default(now())\n\n  @@unique([userId, teamId])\n}\n\nenum TeamRole {\n  LEADER\n  COORDINATOR\n  MEMBER\n}\n\n// Task-Team junction table for team assignments\nmodel TaskTeam {\n  id         String   @id @default(cuid())\n  taskId     String\n  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  teamId     String\n  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)\n  assignedAt DateTime @default(now())\n\n  @@unique([taskId, teamId])\n}\n",
+  "inlineSchemaHash": "d4a78c4120749ede1a201c22fc5ca6f465d3c39fce4e4e501cf42e571d6abc23",
+  "copyEngine": true
+}
+config.dirname = '/'
+
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Account\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"provider\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"providerAccountId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"refresh_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"access_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires_at\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"token_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scope\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"id_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"session_state\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"AccountToUser\"}],\"dbName\":null},\"Session\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sessionToken\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"SessionToUser\"}],\"dbName\":null},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"emailVerified\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"UserStatus\"},{\"name\":\"firstName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"avatar\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"bio\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"jobTitle\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"department\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"nationalId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"district\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"region\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"languages\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"skills\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"emergencyContact\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"availability\",\"kind\":\"enum\",\"type\":\"Availability\"},{\"name\":\"weeklyHours\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"accounts\",\"kind\":\"object\",\"type\":\"Account\",\"relationName\":\"AccountToUser\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"SessionToUser\"},{\"name\":\"timeEntries\",\"kind\":\"object\",\"type\":\"TimeEntry\",\"relationName\":\"TimeEntryToUser\"},{\"name\":\"tasks\",\"kind\":\"object\",\"type\":\"TaskAssignee\",\"relationName\":\"TaskAssigneeToUser\"},{\"name\":\"documents\",\"kind\":\"object\",\"type\":\"Document\",\"relationName\":\"DocumentToUser\"},{\"name\":\"projectMemberships\",\"kind\":\"object\",\"type\":\"ProjectMember\",\"relationName\":\"ProjectMemberToUser\"},{\"name\":\"projectsOwned\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectOwner\"},{\"name\":\"comments\",\"kind\":\"object\",\"type\":\"TaskComment\",\"relationName\":\"TaskCommentToUser\"},{\"name\":\"tasksCreated\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"TaskCreator\"},{\"name\":\"checkIns\",\"kind\":\"object\",\"type\":\"CheckIn\",\"relationName\":\"CheckInToUser\"},{\"name\":\"teams\",\"kind\":\"object\",\"type\":\"UserTeam\",\"relationName\":\"UserToUserTeam\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"approvedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"approvedById\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"approvedBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"UserApproval\"},{\"name\":\"approvedUsers\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"UserApproval\"}],\"dbName\":null},\"VerificationToken\":{\"fields\":[{\"name\":\"identifier\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Task\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"priority\",\"kind\":\"enum\",\"type\":\"TaskPriority\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"TaskStatus\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectToTask\"},{\"name\":\"createdById\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TaskCreator\"},{\"name\":\"attachments\",\"kind\":\"object\",\"type\":\"TaskAttachment\",\"relationName\":\"TaskToTaskAttachment\"},{\"name\":\"comments\",\"kind\":\"object\",\"type\":\"TaskComment\",\"relationName\":\"TaskToTaskComment\"},{\"name\":\"timeEntries\",\"kind\":\"object\",\"type\":\"TimeEntry\",\"relationName\":\"TaskToTimeEntry\"},{\"name\":\"completedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"assignees\",\"kind\":\"object\",\"type\":\"TaskAssignee\",\"relationName\":\"TaskToTaskAssignee\"},{\"name\":\"teams\",\"kind\":\"object\",\"type\":\"TaskTeam\",\"relationName\":\"TaskToTaskTeam\"}],\"dbName\":null},\"TaskAttachment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"taskId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"task\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"TaskToTaskAttachment\"},{\"name\":\"fileName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileSize\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"TaskComment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"taskId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"task\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"TaskToTaskComment\"},{\"name\":\"authorId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"author\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TaskCommentToUser\"},{\"name\":\"content\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"TimeEntry\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"taskId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"task\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"TaskToTimeEntry\"},{\"name\":\"startTime\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endTime\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"duration\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TimeEntryToUser\"}],\"dbName\":null},\"Project\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"ProjectStatus\"},{\"name\":\"priority\",\"kind\":\"enum\",\"type\":\"ProjectPriority\"},{\"name\":\"startDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"budget\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"clientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"client\",\"kind\":\"object\",\"type\":\"Client\",\"relationName\":\"ClientToProject\"},{\"name\":\"ownerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"owner\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ProjectOwner\"},{\"name\":\"colorTag\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"team\",\"kind\":\"object\",\"type\":\"ProjectMember\",\"relationName\":\"ProjectToProjectMember\"},{\"name\":\"tasks\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"ProjectToTask\"},{\"name\":\"documents\",\"kind\":\"object\",\"type\":\"Document\",\"relationName\":\"DocumentToProject\"},{\"name\":\"transactions\",\"kind\":\"object\",\"type\":\"FinancialTransaction\",\"relationName\":\"FinancialTransactionToProject\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"ProjectMember\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ProjectToProjectMember\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ProjectMemberToUser\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"ProjectRole\"},{\"name\":\"joinedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"CheckIn\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"CheckInToUser\"},{\"name\":\"checkInTime\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"checkOutTime\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"TaskAssignee\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"taskId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"task\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"TaskToTaskAssignee\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TaskAssigneeToUser\"},{\"name\":\"assignedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"DocumentCategory\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"color\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"documents\",\"kind\":\"object\",\"type\":\"Document\",\"relationName\":\"DocumentToDocumentCategory\"}],\"dbName\":null},\"Document\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fileSize\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"categoryId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category\",\"kind\":\"object\",\"type\":\"DocumentCategory\",\"relationName\":\"DocumentToDocumentCategory\"},{\"name\":\"uploadedById\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"uploadedBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"DocumentToUser\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"DocumentToProject\"},{\"name\":\"accessLevel\",\"kind\":\"enum\",\"type\":\"DocumentAccess\"},{\"name\":\"isPublic\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"tags\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"FinancialTransaction\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"amount\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"TransactionType\"},{\"name\":\"category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"reference\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"project\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"FinancialTransactionToProject\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Client\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"address\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"website\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"projects\",\"kind\":\"object\",\"type\":\"Project\",\"relationName\":\"ClientToProject\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Team\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"color\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"icon\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"members\",\"kind\":\"object\",\"type\":\"UserTeam\",\"relationName\":\"TeamToUserTeam\"},{\"name\":\"tasks\",\"kind\":\"object\",\"type\":\"TaskTeam\",\"relationName\":\"TaskTeamToTeam\"}],\"dbName\":null},\"UserTeam\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"UserToUserTeam\"},{\"name\":\"teamId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"team\",\"kind\":\"object\",\"type\":\"Team\",\"relationName\":\"TeamToUserTeam\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"TeamRole\"},{\"name\":\"joinedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"TaskTeam\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"taskId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"task\",\"kind\":\"object\",\"type\":\"Task\",\"relationName\":\"TaskToTaskTeam\"},{\"name\":\"teamId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"team\",\"kind\":\"object\",\"type\":\"Team\",\"relationName\":\"TaskTeamToTeam\"},{\"name\":\"assignedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
+config.engineWasm = {
+  getRuntime: async () => require('./query_engine_bg.js'),
+  getQueryEngineWasmModule: async () => {
+    const loader = (await import('#wasm-engine-loader')).default
+    const engine = (await loader).default
+    return engine
   }
 }
+config.compilerWasm = undefined
 
+config.injectableEdgeEnv = () => ({
+  parsed: {
+    DATABASE_URL: typeof globalThis !== 'undefined' && globalThis['DATABASE_URL'] || typeof process !== 'undefined' && process.env && process.env.DATABASE_URL || undefined
+  }
+})
+
+if (typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined) {
+  Debug.enable(typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined)
+}
+
+const PrismaClient = getPrismaClient(config)
 exports.PrismaClient = PrismaClient
-
 Object.assign(exports, Prisma)
+
