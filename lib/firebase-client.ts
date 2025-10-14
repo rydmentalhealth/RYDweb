@@ -19,19 +19,23 @@ let auth: any = null;
 let db: any = null;
 
 if (typeof window !== 'undefined') {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
 
-  // Connect to emulators in development
-  if (process.env.NODE_ENV === 'development') {
-    try {
-      connectAuthEmulator(auth, "http://localhost:9099");
-      connectFirestoreEmulator(db, 'localhost', 8080);
-    } catch (error) {
-      // Emulators might already be connected
-      console.log('Firebase emulators already connected or not available');
+    // Connect to emulators in development
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        connectAuthEmulator(auth, "http://localhost:9099");
+        connectFirestoreEmulator(db, 'localhost', 8080);
+      } catch (error) {
+        // Emulators might already be connected
+        console.log('Firebase emulators already connected or not available');
+      }
     }
+  } catch (error) {
+    console.error('Firebase initialization error:', error);
   }
 }
 

@@ -27,6 +27,10 @@ export const signInWithEmail = async (email: string, password: string) => {
     throw new Error('Firebase auth can only be used on the client side');
   }
 
+  if (!auth || !db) {
+    throw new Error('Firebase not initialized');
+  }
+
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -61,6 +65,10 @@ export const createUserWithEmail = async (
 ) => {
   if (typeof window === 'undefined') {
     throw new Error('Firebase auth can only be used on the client side');
+  }
+
+  if (!auth || !db) {
+    throw new Error('Firebase not initialized');
   }
 
   try {
@@ -104,6 +112,10 @@ export const signOutUser = async () => {
     throw new Error('Firebase auth can only be used on the client side');
   }
 
+  if (!auth) {
+    throw new Error('Firebase not initialized');
+  }
+
   try {
     await signOut(auth);
   } catch (error: any) {
@@ -116,12 +128,19 @@ export const getCurrentUser = (): User | null => {
   if (typeof window === 'undefined') {
     return null;
   }
+  if (!auth) {
+    return null;
+  }
   return auth.currentUser;
 };
 
 // Listen to auth state changes
 export const onAuthStateChange = (callback: (user: FirebaseUser | null) => void) => {
   if (typeof window === 'undefined') {
+    return () => {};
+  }
+
+  if (!auth || !db) {
     return () => {};
   }
 
@@ -165,6 +184,10 @@ export const sendPasswordReset = async (email: string) => {
     throw new Error('Firebase auth can only be used on the client side');
   }
 
+  if (!auth) {
+    throw new Error('Firebase not initialized');
+  }
+
   try {
     await sendPasswordResetEmail(auth, email);
   } catch (error: any) {
@@ -176,6 +199,10 @@ export const sendPasswordReset = async (email: string) => {
 export const sendEmailVerificationToUser = async () => {
   if (typeof window === 'undefined') {
     throw new Error('Firebase auth can only be used on the client side');
+  }
+
+  if (!auth) {
+    throw new Error('Firebase not initialized');
   }
 
   try {
@@ -192,6 +219,10 @@ export const sendEmailVerificationToUser = async () => {
 export const updateUserProfile = async (uid: string, data: Partial<FirebaseUser>) => {
   if (typeof window === 'undefined') {
     throw new Error('Firebase auth can only be used on the client side');
+  }
+
+  if (!db) {
+    throw new Error('Firebase not initialized');
   }
 
   try {
