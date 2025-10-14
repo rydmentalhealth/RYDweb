@@ -24,6 +24,13 @@ const optionalEnvVars = [
   'DATABASE_URL'
 ];
 
+const oauthEnvVars = [
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+  'APPLE_CLIENT_ID',
+  'APPLE_CLIENT_SECRET'
+];
+
 console.log('✅ Checking Environment Variables:');
 
 let allRequired = true;
@@ -49,6 +56,17 @@ optionalEnvVars.forEach(envVar => {
   const value = process.env[envVar];
   console.log(`  ${value ? '✅' : '⚪'} ${envVar}: ${value ? 'Set' : 'Not set'}`);
 });
+
+console.log('\n🔐 OAuth Provider Configuration:');
+const googleConfigured = process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET;
+const appleConfigured = process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET;
+
+console.log(`  ${googleConfigured ? '✅' : '⚪'} Google OAuth: ${googleConfigured ? 'Configured' : 'Not configured'}`);
+console.log(`  ${appleConfigured ? '✅' : '⚪'} Apple OAuth: ${appleConfigured ? 'Configured' : 'Not configured'}`);
+
+if (!googleConfigured && !appleConfigured) {
+  console.log('  ℹ️  No OAuth providers configured - only email/password login will be available');
+}
 
 // Check if lib/auth.ts exists and has the right configuration
 console.log('\n🔧 Checking Configuration Files:');

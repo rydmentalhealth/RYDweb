@@ -45,10 +45,39 @@ app/
    npm install
    ```
 
-3. Run the development server:
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your configuration
+   ```
+
+4. Run the development server:
    ```bash
    npm run dev
    ```
+
+## 🔐 Authentication Setup
+
+This application supports multiple authentication methods:
+
+- **Email/Password**: Always available
+- **Google OAuth**: Optional (requires setup)
+- **Apple OAuth**: Optional (requires setup)
+
+### Setting up Google OAuth
+
+1. Follow the detailed guide: [GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md)
+2. Or use the automated setup script:
+   ```bash
+   ./setup-vercel-env.sh
+   ```
+
+### Verifying Configuration
+
+Check your authentication setup:
+```bash
+node scripts/verify-auth-config.js
+```
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
