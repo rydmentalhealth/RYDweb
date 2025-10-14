@@ -1,0 +1,7 @@
+{
+  "AUTH_SECRET": "K8f3ks+Eoyz3oL4dBtzg5cQoZP2I9E92CBHkW07zN9s=",
+  "GOOGLE_CLIENT_ID": "35661944059-9iv0a5pbpkm18l2dm610a9j0pupvlcke.apps.googleusercontent.com",
+  "GOOGLE_CLIENT_SECRET": "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",
+  "AUTH_URL": "https://rydmentalhealth.org.vercel.app",
+  "NODE_ENV": "production"
+}
