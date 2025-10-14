@@ -1,4 +1,4 @@
-import { UserStatus } from "@/lib/generated/prisma";
+import { UserStatus } from "@prisma/client";
 
 /**
  * Check if a user status allows dashboard access

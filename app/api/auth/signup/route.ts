@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient, UserRole, UserStatus } from "@/lib/generated/prisma";
+import { PrismaClient, UserRole, UserStatus } from "@prisma/client";
 import { z } from "zod";
 import { hashPassword } from "@/lib/server/bcrypt";
 

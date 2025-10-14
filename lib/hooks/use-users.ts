@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { UserRole, UserStatus } from '@/lib/generated/prisma'
+import { UserRole, UserStatus } from '@prisma/client'
 
 export interface User {
   id: string;

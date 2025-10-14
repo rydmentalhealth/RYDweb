@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { hasPermission, checkTaskPermissions, checkProjectPermissions } from "@/lib/auth/rbac";
-import { UserRole, UserStatus } from "@/lib/generated/prisma";
+import { UserRole, UserStatus } from "@prisma/client";
 import { validateUserSession } from "@/lib/auth/user-status";
 
 // GET /api/tasks - Get tasks with permission filtering

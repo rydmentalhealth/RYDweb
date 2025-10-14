@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient, UserStatus, Availability } from '@/lib/generated/prisma'
+import { PrismaClient, UserStatus, Availability } from '@prisma/client'
 import { auth } from '@/lib/auth'
 
 const prisma = new PrismaClient()

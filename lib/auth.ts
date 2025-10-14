@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { PrismaClient } from "@/lib/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import { comparePasswords } from "@/lib/server/bcrypt";
 import { NextAuthConfig } from "next-auth";
 import { DefaultSession } from "next-auth";
@@ -8,7 +8,7 @@ import GoogleProvider from "next-auth/providers/google";
 import AppleProvider from "next-auth/providers/apple";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
-import { UserRole, UserStatus } from "@/lib/generated/prisma";
+import { UserRole, UserStatus } from "@prisma/client";
 
 // Extend the next-auth types
 declare module "next-auth" {

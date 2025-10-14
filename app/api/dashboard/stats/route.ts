@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { PrismaClient } from '@/lib/generated/prisma'
+import { PrismaClient } from '@prisma/client'
 import { startOfMonth, startOfWeek } from 'date-fns'
 import { isAdmin } from '@/lib/auth/rbac'
 

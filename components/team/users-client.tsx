@@ -36,7 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUsers, useUpdateUserStatus, useDeleteUser, type User } from "@/lib/hooks/use-users"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
-import { UserStatus } from "@/lib/generated/prisma"
+import { UserStatus } from "@prisma/client"
 
 // Helper functions for formatting
 function formatRole(role: string): string {

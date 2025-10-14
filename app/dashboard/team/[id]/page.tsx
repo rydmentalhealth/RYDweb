@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { PrismaClient } from "@/lib/generated/prisma"
+import { PrismaClient } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { TeamMemberCard } from "@/components/team/team-member-card"
 import Link from "next/link"

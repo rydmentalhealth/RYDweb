@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkProjectPermissions, hasPermission } from "@/lib/auth/rbac";
 import { auth } from "@/lib/auth";
-import { UserRole, UserStatus, ProjectStatus, ProjectPriority } from "@/lib/generated/prisma";
+import { UserRole, UserStatus, ProjectStatus, ProjectPriority } from "@prisma/client";
 import { db } from "@/lib/db";
 
 // GET /api/projects - Get projects with permission filtering
