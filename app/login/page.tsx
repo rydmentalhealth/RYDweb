@@ -3,6 +3,8 @@ import { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth" 
 import { Suspense } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
   title: "Login - RYD Admin",
@@ -36,6 +38,22 @@ async function LoginPageContent() {
         <Suspense fallback={<div>Loading...</div>}>
           <LoginForm />
         </Suspense>
+        
+        {/* Firebase Login Option */}
+        <div className="mt-6 text-center">
+          <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+            <span className="relative z-10 bg-background px-2 text-muted-foreground">
+              Or try Firebase Authentication
+            </span>
+          </div>
+          <div className="mt-4">
+            <Link href="/firebase-login">
+              <Button variant="outline" className="w-full">
+                Login with Firebase
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { NextAuthProvider } from "@/components/providers/auth-provider";
+import { FirebaseAuthProvider } from "@/components/providers/firebase-auth-provider";
 import { ReactQueryProvider } from "@/lib/query-client";
 
 export const metadata: Metadata = {
@@ -20,7 +21,9 @@ export default function RootLayout({
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
         <ReactQueryProvider>
           <NextAuthProvider>
-            {children}
+            <FirebaseAuthProvider>
+              {children}
+            </FirebaseAuthProvider>
           </NextAuthProvider>
         </ReactQueryProvider>
       </body>
