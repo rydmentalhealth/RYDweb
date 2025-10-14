@@ -19,7 +19,7 @@
         },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "*"
+          "value": "https://rydmentalhealth.org, https://ry-dweb.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",

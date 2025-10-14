@@ -43,8 +43,8 @@ const isDevelopment = process.env.NODE_ENV === "development";
 const getAuthUrl = () => {
   // In production, prioritize AUTH_URL, then NEXTAUTH_URL
   if (isProduction) {
-  if (process.env.AUTH_URL) return process.env.AUTH_URL;
-  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
+    if (process.env.AUTH_URL) return process.env.AUTH_URL;
+    if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
     if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   }
   
@@ -399,6 +399,13 @@ export const authConfig: NextAuthConfig = {
       GoogleProvider({
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        authorization: {
+          params: {
+            prompt: "consent",
+            access_type: "offline",
+            response_type: "code"
+          }
+        }
       })
     ] : []),
     // Only add Apple provider if credentials are available
