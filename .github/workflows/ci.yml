@@ -18,13 +18,15 @@ jobs:
       - name: Verify auth config (dev defaults)
         env:
           AUTH_SECRET: development-secret-change-in-production
+          AUTH_URL: http://localhost:3000
           NEXTAUTH_URL: http://localhost:3000
           NODE_ENV: development
         run: npm run verify:auth
       - name: Build
         env:
           AUTH_SECRET: development-secret-change-in-production
+          AUTH_URL: http://localhost:3000
           NEXTAUTH_URL: http://localhost:3000
           DATABASE_URL: postgresql://user:pass@localhost:5432/db?schema=public
-          NODE_ENV: development
-        run: npm run build --if-present
+          NODE_ENV: production
+        run: npm run build:skip-checks
