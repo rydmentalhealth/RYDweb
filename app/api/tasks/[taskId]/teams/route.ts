@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/rbac";
-import { UserStatus } from "@/lib/generated/prisma";
+import { UserStatus } from "@prisma/client";
 import { validateUserSession } from "@/lib/auth/user-status";
 import { z } from "zod";
 

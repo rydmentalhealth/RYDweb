@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../app/generated/prisma-client"
 }
 
 datasource db {
@@ -35,39 +36,39 @@ model Session {
 
 // Unified User model that combines authentication and profile data
 model User {
-  id                 String          @id @default(cuid())
+  id            String     @id @default(cuid())
   // Authentication fields
-  email              String          @unique
-  emailVerified      DateTime?
-  password           String?
-  role               UserRole        @default(VOLUNTEER)
-  status             UserStatus      @default(PENDING)
-  
+  email         String     @unique
+  emailVerified DateTime?
+  password      String?
+  role          UserRole   @default(VOLUNTEER)
+  status        UserStatus @default(PENDING)
+
   // Profile fields (previously in TeamMember)
-  firstName          String?
-  lastName           String?
-  name               String? // Computed from firstName + lastName
-  avatar             String?
-  bio                String?
-  jobTitle           String?
-  department         String?
-  phone              String?
-  nationalId         String?
-  startDate          DateTime?
-  endDate            DateTime?
-  location           String?
-  district           String?
-  region             String?
-  languages          String?
-  skills             String?
-  emergencyContact   String?
-  availability       Availability?
-  weeklyHours        Int?            @default(40)
-  
+  firstName        String?
+  lastName         String?
+  name             String? // Computed from firstName + lastName
+  avatar           String?
+  bio              String?
+  jobTitle         String?
+  department       String?
+  phone            String?
+  nationalId       String?
+  startDate        DateTime?
+  endDate          DateTime?
+  location         String?
+  district         String?
+  region           String?
+  languages        String?
+  skills           String?
+  emergencyContact String?
+  availability     Availability?
+  weeklyHours      Int?          @default(40)
+
   // Authentication relations
-  accounts           Account[]
-  sessions           Session[]
-  
+  accounts Account[]
+  sessions Session[]
+
   // Application relations
   timeEntries        TimeEntry[]
   tasks              TaskAssignee[]
@@ -77,15 +78,15 @@ model User {
   comments           TaskComment[]
   tasksCreated       Task[]          @relation("TaskCreator")
   checkIns           CheckIn[]
-  teams              UserTeam[]      // New: User team memberships
-  
+  teams              UserTeam[] // New: User team memberships
+
   // Audit fields
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  approvedAt         DateTime?
-  approvedById       String?
-  approvedBy         User?           @relation("UserApproval", fields: [approvedById], references: [id])
-  approvedUsers      User[]          @relation("UserApproval")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  approvedAt    DateTime?
+  approvedById  String?
+  approvedBy    User?     @relation("UserApproval", fields: [approvedById], references: [id])
+  approvedUsers User[]    @relation("UserApproval")
 }
 
 model VerificationToken {
@@ -104,11 +105,11 @@ enum UserRole {
 }
 
 enum UserStatus {
-  PENDING      // Awaiting admin approval
-  ACTIVE       // Approved and active
-  INACTIVE     // Temporarily deactivated
-  SUSPENDED    // Suspended by admin
-  REJECTED     // Application rejected
+  PENDING // Awaiting admin approval
+  ACTIVE // Approved and active
+  INACTIVE // Temporarily deactivated
+  SUSPENDED // Suspended by admin
+  REJECTED // Application rejected
 }
 
 enum Availability {
@@ -138,8 +139,8 @@ model Task {
   comments    TaskComment[]
   timeEntries TimeEntry[]
   completedAt DateTime?
-  assignees   TaskAssignee[]   // Individual user assignments
-  teams       TaskTeam[]       // Team assignments
+  assignees   TaskAssignee[] // Individual user assignments
+  teams       TaskTeam[] // Team assignments
 }
 
 enum TaskPriority {
@@ -255,15 +256,15 @@ enum ProjectRole {
 
 // Attendance model
 model CheckIn {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  checkInTime  DateTime @default(now())
+  user         User      @relation(fields: [userId], references: [id])
+  checkInTime  DateTime  @default(now())
   checkOutTime DateTime?
   notes        String?
   location     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 // Task assignees junction table
@@ -357,18 +358,18 @@ model Client {
 
 // Team model for organizational structure
 model Team {
-  id          String     @id @default(cuid())
-  name        String     @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String?
-  color       String?    @default("#4f46e5")
-  icon        String?    // Icon name for UI display
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  
+  color       String?  @default("#4f46e5")
+  icon        String? // Icon name for UI display
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   // Relations
-  members     UserTeam[]
-  tasks       TaskTeam[]
+  members UserTeam[]
+  tasks   TaskTeam[]
 }
 
 // User-Team junction table (many-to-many)
@@ -380,7 +381,7 @@ model UserTeam {
   team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   role     TeamRole @default(MEMBER)
   joinedAt DateTime @default(now())
-  
+
   @@unique([userId, teamId])
 }
 
@@ -398,6 +399,6 @@ model TaskTeam {
   teamId     String
   team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   assignedAt DateTime @default(now())
-  
+
   @@unique([taskId, teamId])
 }

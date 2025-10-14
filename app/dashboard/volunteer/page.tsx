@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { PrismaClient } from "@/lib/generated/prisma"
+import { PrismaClient } from "@prisma/client"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {

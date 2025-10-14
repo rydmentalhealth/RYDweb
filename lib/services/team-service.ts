@@ -4,7 +4,7 @@
  */
 
 import { prisma } from "@/lib/db"
-import { TeamRole, UserStatus } from "@/lib/generated/prisma"
+import { TeamRole, UserStatus } from "@prisma/client"
 
 // Team interfaces
 export interface Team {
