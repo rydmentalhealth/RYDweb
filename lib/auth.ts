@@ -52,6 +52,15 @@ const getAuthUrl = () => {
   return process.env.NEXTAUTH_URL || "http://localhost:3000";
 };
 
+// Debug logging for URL resolution
+console.log("[Auth] URL Resolution:", {
+  isProduction,
+  AUTH_URL: process.env.AUTH_URL,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  VERCEL_URL: process.env.VERCEL_URL,
+  resolvedUrl: getAuthUrl()
+});
+
 // Get the secret with proper fallback
 const getAuthSecret = () => {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
