@@ -8,6 +8,7 @@ const routeAccess = {
     "/login",
     "/auth",
     "/api/auth",
+    "/auth-test",
     "/pending-approval",
     "/auth/error",
     "/auth/signin",
@@ -62,7 +63,7 @@ export async function middleware(req: NextRequest) {
 
   // Redirect unauthenticated users to signin
   if (!token) {
-    const signInUrl = new URL("/auth/signin", req.url);
+    const signInUrl = new URL("/login", req.url);
     signInUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(signInUrl);
   }
@@ -124,7 +125,7 @@ export async function middleware(req: NextRequest) {
     
     // In case of token validation error, redirect to signin
     // Don't throw error that might interfere with auth flow
-    const signInUrl = new URL("/auth/signin", req.url);
+    const signInUrl = new URL("/login", req.url);
     signInUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(signInUrl);
   }

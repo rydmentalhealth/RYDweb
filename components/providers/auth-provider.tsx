@@ -18,9 +18,17 @@ export function NextAuthProvider({ children }: Props) {
   const fetchSession = useCallback(async () => {
     try {
       setLoading(true);
+      console.log("[AuthProvider] Fetching session...");
       const sessionData = await getSession();
       
       console.log("[AuthProvider] Session fetched:", !!sessionData);
+      if (sessionData) {
+        console.log("[AuthProvider] Session details:", {
+          user: sessionData.user?.email,
+          role: sessionData.user?.role,
+          status: sessionData.user?.status
+        });
+      }
       
       // If on a protected route and no session in production, redirect to login
       if (!sessionData && 

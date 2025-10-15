@@ -1,6 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "npx prisma generate --no-engine && NEXT_SKIP_ESLINT=1 NEXT_SKIP_TYPE_CHECK=1 next build --no-lint",
+  "buildCommand": "npx prisma generate && NEXT_SKIP_ESLINT=1 NEXT_SKIP_TYPE_CHECK=1 next build --no-lint",
+  "env": {
+    "NODE_ENV": "production"
+  },
   "outputDirectory": ".next",
   "installCommand": "npm ci",
   "regions": ["iad1"],
@@ -19,7 +22,7 @@
         },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "*"
+          "value": "https://rydmentalhealth.org"
         },
         {
           "key": "Access-Control-Allow-Methods",

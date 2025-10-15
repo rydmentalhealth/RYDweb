@@ -43,8 +43,8 @@ const isDevelopment = process.env.NODE_ENV === "development";
 const getAuthUrl = () => {
   // In production, prioritize AUTH_URL, then NEXTAUTH_URL
   if (isProduction) {
-  if (process.env.AUTH_URL) return process.env.AUTH_URL;
-  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
+    if (process.env.AUTH_URL) return process.env.AUTH_URL;
+    if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
     if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   }
   
@@ -52,21 +52,30 @@ const getAuthUrl = () => {
   return process.env.NEXTAUTH_URL || "http://localhost:3000";
 };
 
+// Debug logging for URL resolution
+console.log("[Auth] URL Resolution:", {
+  isProduction,
+  AUTH_URL: process.env.AUTH_URL,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  VERCEL_URL: process.env.VERCEL_URL,
+  resolvedUrl: getAuthUrl()
+});
+
 // Get the secret with proper fallback
 const getAuthSecret = () => {
-  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
   
   if (!secret) {
     // Avoid throwing at import-time during static analysis/build. Log and use placeholder.
     if (process.env.NEXT_RUNTIME === 'edge' || process.env.VERCEL) {
-      console.warn("[Auth] AUTH_SECRET missing at build-time. Ensure it is set in deployment environment.");
+      console.warn("[Auth] NEXTAUTH_SECRET missing at build-time. Ensure it is set in deployment environment.");
       return "placeholder-build-secret-do-not-use";
     }
     if (process.env.NODE_ENV === "production") {
-      console.warn("[Auth] AUTH_SECRET missing during build. Using placeholder; requests will fail at runtime.");
+      console.warn("[Auth] NEXTAUTH_SECRET missing during build. Using placeholder; requests will fail at runtime.");
       return "placeholder-build-secret-do-not-use";
     }
-    console.warn("[Auth] No AUTH_SECRET found, using default for development");
+    console.warn("[Auth] No NEXTAUTH_SECRET found, using default for development");
     return "development-secret-change-in-production";
   }
   
@@ -399,6 +408,13 @@ export const authConfig: NextAuthConfig = {
       GoogleProvider({
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        authorization: {
+          params: {
+            prompt: "consent",
+            access_type: "offline",
+            response_type: "code"
+          }
+        }
       })
     ] : []),
     // Only add Apple provider if credentials are available
