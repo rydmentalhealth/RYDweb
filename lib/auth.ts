@@ -63,19 +63,19 @@ console.log("[Auth] URL Resolution:", {
 
 // Get the secret with proper fallback
 const getAuthSecret = () => {
-  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
   
   if (!secret) {
     // Avoid throwing at import-time during static analysis/build. Log and use placeholder.
     if (process.env.NEXT_RUNTIME === 'edge' || process.env.VERCEL) {
-      console.warn("[Auth] AUTH_SECRET missing at build-time. Ensure it is set in deployment environment.");
+      console.warn("[Auth] NEXTAUTH_SECRET missing at build-time. Ensure it is set in deployment environment.");
       return "placeholder-build-secret-do-not-use";
     }
     if (process.env.NODE_ENV === "production") {
-      console.warn("[Auth] AUTH_SECRET missing during build. Using placeholder; requests will fail at runtime.");
+      console.warn("[Auth] NEXTAUTH_SECRET missing during build. Using placeholder; requests will fail at runtime.");
       return "placeholder-build-secret-do-not-use";
     }
-    console.warn("[Auth] No AUTH_SECRET found, using default for development");
+    console.warn("[Auth] No NEXTAUTH_SECRET found, using default for development");
     return "development-secret-change-in-production";
   }
   
