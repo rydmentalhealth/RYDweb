@@ -312,8 +312,9 @@ model Document {
   fileUrl      String
   fileType     String
   fileSize     Int?
+  category     String?
   categoryId   String?
-  category     DocumentCategory? @relation(fields: [categoryId], references: [id])
+  documentCategory DocumentCategory? @relation(fields: [categoryId], references: [id])
   uploadedById String
   uploadedBy   User              @relation(fields: [uploadedById], references: [id])
   projectId    String?
@@ -454,6 +455,7 @@ model EmployeeProfile {
   attendanceRecords AttendanceRecord[]
   privateNotes      PrivateNote[]
   timelineEvents    TimelineEvent[]
+  welcomeNotes      WelcomeNote[]
   
   // Audit fields
   createdAt         DateTime          @default(now())
@@ -489,7 +491,7 @@ model EmployeeDocument {
   fileUrl       String
   fileType      String
   fileSize      Int?
-  category      DocumentCategory    @default(IDENTIFICATION)
+  category      EmployeeDocumentCategory    @default(IDENTIFICATION)
   uploadedById  String
   uploadedBy    User                @relation(fields: [uploadedById], references: [id])
   isPublic      Boolean             @default(false)
@@ -497,7 +499,7 @@ model EmployeeDocument {
   updatedAt     DateTime            @updatedAt
 }
 
-enum DocumentCategory {
+enum EmployeeDocumentCategory {
   IDENTIFICATION
   EMPLOYMENT
   CERTIFICATES
