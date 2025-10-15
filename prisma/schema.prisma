@@ -74,6 +74,7 @@ model User {
   documents          Document[]
   projectMemberships ProjectMember[]
   projectsOwned      Project[]       @relation("ProjectOwner")
+  projectsLed        Project[]       @relation("ProjectLead")
   comments           TaskComment[]
   tasksCreated       Task[]          @relation("TaskCreator")
   checkIns           CheckIn[]
@@ -92,6 +93,24 @@ model User {
   budgetsModified    DepartmentBudget[] @relation("BudgetModifier")
   budgetAdjustments  BudgetAdjustment[]
   reportsGenerated   FinancialReport[]
+  // Project Management relations
+  milestoneResponsible ProjectMilestone[] @relation("MilestoneResponsible")
+  progressUpdates    ProjectProgressUpdate[] @relation("ProgressUpdateUser")
+  progressApprovals  ProjectProgressUpdate[] @relation("ProgressApprover")
+  projectActivities  ProjectActivityLog[] @relation("ProjectActivityUser")
+  projectResources   ProjectResource[] @relation("ProjectResourceUser")
+  milestoneAttachments MilestoneAttachment[]
+  
+  // Employee Management relations
+  employeeProfile    EmployeeProfile?
+  createdEmployees   EmployeeProfile[] @relation("EmployeeCreatedBy")
+  uploadedDocuments  EmployeeDocument[]
+  performanceReviews PerformanceReview[]
+  approvedLeaves     LeaveRequest[]
+  privateNotes       PrivateNote[]
+  timelineEvents     TimelineEvent[]
+  welcomeNotes       WelcomeNote[]
+  activityLogs       ActivityLog[]
   
   // Audit fields
   createdAt          DateTime        @default(now())
@@ -113,6 +132,9 @@ model VerificationToken {
 enum UserRole {
   SUPER_ADMIN
   ADMIN
+  DIRECTOR
+  HR_OFFICER
+  TEAM_LEAD
   STAFF
   VOLUNTEER
 }
@@ -225,11 +247,20 @@ model Project {
   ownerId      String
   owner        User                   @relation("ProjectOwner", fields: [ownerId], references: [id])
   colorTag     String?
+  department   String?                // Department dropdown: Outreach, Therapy, IT, Media, Research, etc.
+  projectLeadId String?               // Project Lead from existing employee list
+  projectLead  User?                  @relation("ProjectLead", fields: [projectLeadId], references: [id])
+  googleDriveFolderId String?         // Google Drive folder integration
+  notionPageId String?                // Notion page integration
   team         ProjectMember[]
   tasks        Task[]
   documents    Document[]
   transactions FinancialTransaction[]
   expenses     ExpenseRequest[]
+  milestones   ProjectMilestone[]     // Project milestones
+  progressUpdates ProjectProgressUpdate[] // Daily progress updates
+  activityLogs ProjectActivityLog[]   // Project activity logging
+  resources    ProjectResource[]      // Project resources and attachments
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
 }
@@ -266,6 +297,106 @@ enum ProjectRole {
   LEADER
   COORDINATOR
   MEMBER
+}
+
+// Project Milestone model
+model ProjectMilestone {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  dueDate     DateTime
+  progress    Int           @default(0) // Progress percentage 0-100
+  status      MilestoneStatus @default(PLANNED)
+  responsibleUserId String?
+  responsibleUser User?      @relation("MilestoneResponsible", fields: [responsibleUserId], references: [id])
+  attachments MilestoneAttachment[]
+  subTasks    MilestoneSubTask[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum MilestoneStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+  OVERDUE
+}
+
+// Milestone Sub-tasks
+model MilestoneSubTask {
+  id          String        @id @default(cuid())
+  milestoneId String
+  milestone   ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  isCompleted Boolean       @default(false)
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// Milestone Attachments
+model MilestoneAttachment {
+  id          String        @id @default(cuid())
+  milestoneId String
+  milestone   ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int?
+  uploadedById String
+  uploadedBy  User          @relation(fields: [uploadedById], references: [id])
+  createdAt   DateTime      @default(now())
+}
+
+// Daily Progress Updates
+model ProjectProgressUpdate {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation("ProgressUpdateUser", fields: [userId], references: [id])
+  taskActivity String       // Task/Activity completed
+  progressPercentage Int    // Percentage progress
+  challenges  String?       // Challenges encountered
+  nextPlan    String?       // Next day's plan
+  attachment  String?       // Attachment URL
+  isApproved  Boolean       @default(false)
+  approvedById String?
+  approvedBy  User?         @relation("ProgressApprover", fields: [approvedById], references: [id])
+  approvedAt  DateTime?
+  comments    String?       // Project Lead comments
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// Project Activity Log
+model ProjectActivityLog {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation("ProjectActivityUser", fields: [userId], references: [id])
+  action      String        // CREATE, UPDATE, DELETE, ASSIGN, etc.
+  details     Json?         // Additional action details
+  createdAt   DateTime      @default(now())
+}
+
+// Project Resources
+model ProjectResource {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int?
+  uploadedById String
+  uploadedBy  User          @relation("ProjectResourceUser", fields: [uploadedById], references: [id])
+  createdAt   DateTime      @default(now())
 }
 
 // Attendance model
@@ -313,8 +444,9 @@ model Document {
   fileUrl      String
   fileType     String
   fileSize     Int?
+  category     String?
   categoryId   String?
-  category     DocumentCategory? @relation(fields: [categoryId], references: [id])
+  documentCategory DocumentCategory? @relation(fields: [categoryId], references: [id])
   uploadedById String
   uploadedBy   User              @relation(fields: [uploadedById], references: [id])
   projectId    String?
@@ -617,4 +749,265 @@ model TaskTeam {
   assignedAt DateTime @default(now())
   
   @@unique([taskId, teamId])
+}
+
+// Employee Profile System
+model EmployeeProfile {
+  id                String            @id @default(cuid())
+  userId            String            @unique
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Information
+  fullName          String
+  gender            String?
+  dateOfBirth       DateTime?
+  nationalId        String?           @unique
+  phone             String?
+  email             String?
+  address           String?
+  
+  // Professional Information
+  department        String?
+  designation       String?
+  supervisorId      String?
+  supervisor        EmployeeProfile?  @relation("EmployeeSupervisor", fields: [supervisorId], references: [id])
+  subordinates      EmployeeProfile[] @relation("EmployeeSupervisor")
+  employmentType    EmploymentType    @default(FULL_TIME)
+  startDate         DateTime?
+  status            EmployeeStatus    @default(ACTIVE)
+  
+  // System Information
+  employeeId        String            @unique // RYD-YYMM-XXXX format
+  profilePhoto      String?
+  bio               String?
+  
+  // Relations
+  documents         EmployeeDocument[]
+  onboardingItems   OnboardingItem[]
+  performanceReviews PerformanceReview[]
+  leaveRequests     LeaveRequest[]
+  attendanceRecords AttendanceRecord[]
+  privateNotes      PrivateNote[]
+  timelineEvents    TimelineEvent[]
+  welcomeNotes      WelcomeNote[]
+  
+  // Audit fields
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  createdById       String?
+  createdBy         User?             @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  VOLUNTEER
+  INTERN
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  TERMINATED
+  ON_LEAVE
+  SUSPENDED
+}
+
+// Employee Document System
+model EmployeeDocument {
+  id            String              @id @default(cuid())
+  employeeId    String
+  employee      EmployeeProfile     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  fileName      String
+  fileUrl       String
+  fileType      String
+  fileSize      Int?
+  category      EmployeeDocumentCategory    @default(IDENTIFICATION)
+  uploadedById  String
+  uploadedBy    User                @relation(fields: [uploadedById], references: [id])
+  isPublic      Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+enum EmployeeDocumentCategory {
+  IDENTIFICATION
+  EMPLOYMENT
+  CERTIFICATES
+  PERFORMANCE
+  LEAVE
+  OTHER
+}
+
+// Onboarding System
+model OnboardingItem {
+  id          String          @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  category    OnboardingCategory @default(ORIENTATION)
+  isRequired  Boolean         @default(true)
+  isCompleted Boolean         @default(false)
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+enum OnboardingCategory {
+  ORIENTATION
+  DOCUMENTATION
+  TRAINING
+  COMPLIANCE
+  WELCOME
+}
+
+// Performance Management
+model PerformanceReview {
+  id          String          @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  rating      Int?            // 1-5 scale
+  goals       String?
+  achievements String?
+  areasForImprovement String?
+  reviewerId  String
+  reviewer    User            @relation(fields: [reviewerId], references: [id])
+  reviewDate  DateTime        @default(now())
+  nextReviewDate DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+// Leave Management
+model LeaveRequest {
+  id          String          @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type        LeaveType
+  startDate   DateTime
+  endDate     DateTime
+  days        Int
+  reason      String?
+  status      LeaveStatus     @default(PENDING)
+  approvedById String?
+  approvedBy  User?           @relation(fields: [approvedById], references: [id])
+  approvedAt  DateTime?
+  comments    String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  MATERNITY
+  PATERNITY
+  EMERGENCY
+  UNPAID
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// Attendance Management
+model AttendanceRecord {
+  id          String          @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date        DateTime
+  checkIn     DateTime?
+  checkOut    DateTime?
+  hoursWorked Float?
+  status      AttendanceStatus @default(PRESENT)
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  ON_LEAVE
+}
+
+// Private Notes System
+model PrivateNote {
+  id          String          @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  content     String
+  authorId    String
+  author      User            @relation(fields: [authorId], references: [id])
+  isConfidential Boolean      @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+// Timeline Events
+model TimelineEvent {
+  id          String          @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type        TimelineEventType
+  title       String
+  description String?
+  date        DateTime
+  metadata    Json?           // Store additional event-specific data
+  createdById String?
+  createdBy   User?           @relation(fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
+}
+
+enum TimelineEventType {
+  JOINED
+  PROMOTION
+  ROLE_CHANGE
+  DEPARTMENT_CHANGE
+  RECOGNITION
+  TRAINING
+  LEAVE
+  RETURN
+  TERMINATION
+  OTHER
+}
+
+// Activity Log for RBAC
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  action      String   // CREATE, UPDATE, DELETE, VIEW, etc.
+  resource    String   // employee, document, etc.
+  resourceId  String?  // ID of the affected resource
+  details     Json?    // Additional action details
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+}
+
+// Welcome Notes
+model WelcomeNote {
+  id          String          @id @default(cuid())
+  employeeId  String
+  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  content     String
+  authorId    String
+  author      User            @relation(fields: [authorId], references: [id])
+  isVisible   Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
