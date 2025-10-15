@@ -79,6 +79,20 @@ model User {
   checkIns           CheckIn[]
   teams              UserTeam[]      // New: User team memberships
   
+  // Finance relations
+  stipends           Stipend[]
+  stipendsApproved   Stipend[]       @relation("StipendApproval")
+  expenseRequests    ExpenseRequest[] @relation("ExpenseRequester")
+  expenseTeamLead    ExpenseRequest[] @relation("ExpenseTeamLead")
+  expenseFinanceApproval ExpenseRequest[] @relation("ExpenseFinanceApproval")
+  expenseDirectorApproval ExpenseRequest[] @relation("ExpenseDirectorApproval")
+  expenseAttachments ExpenseAttachment[]
+  expenseComments    ExpenseComment[]
+  budgetsCreated     DepartmentBudget[] @relation("BudgetCreator")
+  budgetsModified    DepartmentBudget[] @relation("BudgetModifier")
+  budgetAdjustments  BudgetAdjustment[]
+  reportsGenerated   FinancialReport[]
+  
   // Audit fields
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
@@ -215,6 +229,7 @@ model Project {
   tasks        Task[]
   documents    Document[]
   transactions FinancialTransaction[]
+  expenses     ExpenseRequest[]
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
 }
@@ -339,6 +354,208 @@ enum TransactionType {
   EXPENSE
   DONATION
   GRANT
+}
+
+// Stipend model for employee/volunteer payments
+model Stipend {
+  id            String        @id @default(cuid())
+  employeeId    String
+  employee      User          @relation(fields: [employeeId], references: [id])
+  amount        Float
+  type          StipendType
+  status        PaymentStatus @default(PENDING)
+  paymentDate   DateTime?
+  paymentMethod PaymentMethod?
+  remarks       String?
+  department    String?
+  approvedById  String?
+  approvedBy    User?         @relation("StipendApproval", fields: [approvedById], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum StipendType {
+  MONTHLY_STIPEND
+  ALLOWANCE
+  REIMBURSEMENT
+  BONUS
+  VOLUNTEER_ALLOWANCE
+  TRANSPORT_ALLOWANCE
+  MEAL_ALLOWANCE
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+enum PaymentMethod {
+  MOBILE_MONEY
+  BANK_TRANSFER
+  CASH
+  CHEQUE
+}
+
+// Expense request model
+model ExpenseRequest {
+  id            String           @id @default(cuid())
+  requesterId   String
+  requester     User             @relation("ExpenseRequester", fields: [requesterId], references: [id])
+  purpose       String
+  category      ExpenseCategory
+  amount        Float
+  description   String?
+  status        ExpenseStatus    @default(PENDING)
+  department    String?
+  projectId     String?
+  project       Project?         @relation(fields: [projectId], references: [id])
+  
+  // Approval workflow
+  teamLeadId    String?
+  teamLead      User?            @relation("ExpenseTeamLead", fields: [teamLeadId], references: [id])
+  teamLeadApprovedAt DateTime?
+  teamLeadNotes String?
+  
+  financeApprovedById String?
+  financeApprovedBy   User?      @relation("ExpenseFinanceApproval", fields: [financeApprovedById], references: [id])
+  financeApprovedAt   DateTime?
+  financeNotes        String?
+  
+  directorApprovedById String?
+  directorApprovedBy   User?      @relation("ExpenseDirectorApproval", fields: [directorApprovedById], references: [id])
+  directorApprovedAt   DateTime?
+  directorNotes        String?
+  
+  // Payment details
+  paidAt        DateTime?
+  paidBy        String?
+  paymentMethod PaymentMethod?
+  voucherUrl    String? // PDF voucher URL
+  
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  // Relations
+  attachments   ExpenseAttachment[]
+  comments      ExpenseComment[]
+  budgetId      String?
+  budget        DepartmentBudget? @relation(fields: [budgetId], references: [id])
+}
+
+enum ExpenseCategory {
+  TRANSPORT
+  PRINTING
+  OUTREACH_EVENT
+  OFFICE_SUPPLIES
+  COMMUNICATION
+  TRAINING
+  MEETING_EXPENSES
+  EQUIPMENT
+  MAINTENANCE
+  OTHER
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED_BY_TL
+  APPROVED_BY_FINANCE
+  REJECTED
+  PAID
+  CANCELLED
+}
+
+// Expense attachments
+model ExpenseAttachment {
+  id              String         @id @default(cuid())
+  expenseRequestId String
+  expenseRequest  ExpenseRequest @relation(fields: [expenseRequestId], references: [id], onDelete: Cascade)
+  fileName        String
+  fileUrl         String
+  fileType        String
+  fileSize        Int?
+  uploadedById    String
+  uploadedBy      User           @relation(fields: [uploadedById], references: [id])
+  createdAt       DateTime       @default(now())
+}
+
+// Expense comments
+model ExpenseComment {
+  id              String         @id @default(cuid())
+  expenseRequestId String
+  expenseRequest  ExpenseRequest @relation(fields: [expenseRequestId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User           @relation(fields: [authorId], references: [id])
+  content         String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+// Departmental budget model
+model DepartmentBudget {
+  id              String         @id @default(cuid())
+  department      String
+  budgetPeriod    String         // e.g., "2025-01" for January 2025
+  allocatedAmount Float
+  spentAmount     Float          @default(0)
+  remainingAmount Float
+  isActive        Boolean        @default(true)
+  
+  // Budget management
+  createdById     String
+  createdBy       User           @relation("BudgetCreator", fields: [createdById], references: [id])
+  lastModifiedById String?
+  lastModifiedBy  User?          @relation("BudgetModifier", fields: [lastModifiedById], references: [id])
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  // Relations
+  adjustments     BudgetAdjustment[]
+  expenses        ExpenseRequest[]
+}
+
+// Budget adjustments for top-ups or reductions
+model BudgetAdjustment {
+  id              String         @id @default(cuid())
+  budgetId        String
+  budget          DepartmentBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  amount          Float
+  type            AdjustmentType
+  reason          String
+  approvedById    String
+  approvedBy      User           @relation(fields: [approvedById], references: [id])
+  createdAt       DateTime       @default(now())
+}
+
+enum AdjustmentType {
+  TOP_UP
+  REDUCTION
+  CORRECTION
+}
+
+// Financial reports model
+model FinancialReport {
+  id              String         @id @default(cuid())
+  reportType      ReportType
+  period          String         // e.g., "2025-01" for January 2025
+  title           String
+  description     String?
+  fileUrl         String?        // PDF report URL
+  data            Json?          // Report data as JSON
+  generatedById   String
+  generatedBy     User           @relation(fields: [generatedById], references: [id])
+  createdAt       DateTime       @default(now())
+}
+
+enum ReportType {
+  MONTHLY_SUMMARY
+  DEPARTMENTAL_REPORT
+  EXPENSE_LEDGER
+  STIPEND_REPORT
+  BUDGET_ANALYSIS
+  CUSTOM
 }
 
 // Client model
