@@ -8,6 +8,7 @@ const routeAccess = {
     "/login",
     "/auth",
     "/api/auth",
+    "/auth-test",
     "/pending-approval",
     "/auth/error",
     "/auth/signin",
