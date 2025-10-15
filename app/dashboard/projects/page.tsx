@@ -1,13 +1,15 @@
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { Button } from "@/components/ui/button"
-import { FilterIcon, DownloadIcon, PlusIcon } from "lucide-react"
+import { FilterIcon, DownloadIcon, PlusIcon, BarChart3 } from "lucide-react"
 import { auth } from "@/lib/auth"
 import { Suspense } from "react"
 import { ProjectsClient } from "@/components/projects/projects-client"
 import { ProjectStats } from "@/components/projects/project-stats"
+import { ProjectAnalytics } from "@/components/projects/project-analytics"
 import { AddProjectSheet } from "@/components/projects/add-project-sheet"
 import PermissionChecker from "@/components/auth/permission-checker"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export const metadata: Metadata = {
   title: "Project Management",
@@ -64,13 +66,28 @@ export default async function ProjectsPage() {
             </div>
             
             <div className="px-4 md:px-6">
-              <div className="rounded-lg border shadow-sm">
-                <div className="p-6">
-                  <Suspense fallback={<div className="py-8 text-center">Loading projects...</div>}>
-                <ProjectsClient />
-              </Suspense>
-                </div>
-              </div>
+              <Tabs defaultValue="projects" className="space-y-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="projects">Projects</TabsTrigger>
+                  <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="projects">
+                  <div className="rounded-lg border shadow-sm">
+                    <div className="p-6">
+                      <Suspense fallback={<div className="py-8 text-center">Loading projects...</div>}>
+                        <ProjectsClient />
+                      </Suspense>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="analytics">
+                  <Suspense fallback={<div className="py-8 text-center">Loading analytics...</div>}>
+                    <ProjectAnalytics projects={[]} />
+                  </Suspense>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>

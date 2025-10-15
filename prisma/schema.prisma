@@ -74,10 +74,19 @@ model User {
   documents          Document[]
   projectMemberships ProjectMember[]
   projectsOwned      Project[]       @relation("ProjectOwner")
+  projectsLed        Project[]       @relation("ProjectLead")
   comments           TaskComment[]
   tasksCreated       Task[]          @relation("TaskCreator")
   checkIns           CheckIn[]
   teams              UserTeam[]      // New: User team memberships
+  
+  // Project Management relations
+  milestoneResponsible ProjectMilestone[] @relation("MilestoneResponsible")
+  progressUpdates    ProjectProgressUpdate[] @relation("ProgressUpdateUser")
+  progressApprovals  ProjectProgressUpdate[] @relation("ProgressApprover")
+  projectActivities  ProjectActivityLog[] @relation("ProjectActivityUser")
+  projectResources   ProjectResource[] @relation("ProjectResourceUser")
+  milestoneAttachments MilestoneAttachment[]
   
   // Employee Management relations
   employeeProfile    EmployeeProfile?
@@ -225,10 +234,19 @@ model Project {
   ownerId      String
   owner        User                   @relation("ProjectOwner", fields: [ownerId], references: [id])
   colorTag     String?
+  department   String?                // Department dropdown: Outreach, Therapy, IT, Media, Research, etc.
+  projectLeadId String?               // Project Lead from existing employee list
+  projectLead  User?                  @relation("ProjectLead", fields: [projectLeadId], references: [id])
+  googleDriveFolderId String?         // Google Drive folder integration
+  notionPageId String?                // Notion page integration
   team         ProjectMember[]
   tasks        Task[]
   documents    Document[]
   transactions FinancialTransaction[]
+  milestones   ProjectMilestone[]     // Project milestones
+  progressUpdates ProjectProgressUpdate[] // Daily progress updates
+  activityLogs ProjectActivityLog[]   // Project activity logging
+  resources    ProjectResource[]      // Project resources and attachments
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
 }
@@ -265,6 +283,106 @@ enum ProjectRole {
   LEADER
   COORDINATOR
   MEMBER
+}
+
+// Project Milestone model
+model ProjectMilestone {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  dueDate     DateTime
+  progress    Int           @default(0) // Progress percentage 0-100
+  status      MilestoneStatus @default(PLANNED)
+  responsibleUserId String?
+  responsibleUser User?      @relation("MilestoneResponsible", fields: [responsibleUserId], references: [id])
+  attachments MilestoneAttachment[]
+  subTasks    MilestoneSubTask[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum MilestoneStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+  OVERDUE
+}
+
+// Milestone Sub-tasks
+model MilestoneSubTask {
+  id          String        @id @default(cuid())
+  milestoneId String
+  milestone   ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  isCompleted Boolean       @default(false)
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// Milestone Attachments
+model MilestoneAttachment {
+  id          String        @id @default(cuid())
+  milestoneId String
+  milestone   ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int?
+  uploadedById String
+  uploadedBy  User          @relation(fields: [uploadedById], references: [id])
+  createdAt   DateTime      @default(now())
+}
+
+// Daily Progress Updates
+model ProjectProgressUpdate {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation("ProgressUpdateUser", fields: [userId], references: [id])
+  taskActivity String       // Task/Activity completed
+  progressPercentage Int    // Percentage progress
+  challenges  String?       // Challenges encountered
+  nextPlan    String?       // Next day's plan
+  attachment  String?       // Attachment URL
+  isApproved  Boolean       @default(false)
+  approvedById String?
+  approvedBy  User?         @relation("ProgressApprover", fields: [approvedById], references: [id])
+  approvedAt  DateTime?
+  comments    String?       // Project Lead comments
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// Project Activity Log
+model ProjectActivityLog {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation("ProjectActivityUser", fields: [userId], references: [id])
+  action      String        // CREATE, UPDATE, DELETE, ASSIGN, etc.
+  details     Json?         // Additional action details
+  createdAt   DateTime      @default(now())
+}
+
+// Project Resources
+model ProjectResource {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int?
+  uploadedById String
+  uploadedBy  User          @relation("ProjectResourceUser", fields: [uploadedById], references: [id])
+  createdAt   DateTime      @default(now())
 }
 
 // Attendance model

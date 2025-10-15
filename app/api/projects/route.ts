@@ -227,8 +227,13 @@ export async function POST(request: NextRequest) {
         name: data.name,
         description: data.description,
         status: data.status || "PLANNING",
+        priority: data.priority || "MEDIUM",
+        department: data.department,
+        projectLeadId: data.projectLeadId,
         startDate: data.startDate ? new Date(data.startDate) : null,
         endDate: data.endDate ? new Date(data.endDate) : null,
+        googleDriveFolderId: data.googleDriveFolderId,
+        notionPageId: data.notionPageId,
         ownerId: user.id,
         team: {
           create: memberIds.map((id: string) => ({
