@@ -10,6 +10,9 @@ const databaseUrl = process.env.PRISMA_DATABASE_URL?.includes('accelerate.prisma
   ? process.env.PRISMA_DATABASE_URL 
   : process.env.DATABASE_URL;
 
+// Fallback URL for build time when DATABASE_URL is not available
+const fallbackUrl = 'postgresql://user:password@localhost:5432/ryd_dev';
+
 // Debug logging for database URL selection
 if (process.env.NODE_ENV === 'production') {
   console.log('[Database] URL Selection:', {
@@ -24,7 +27,7 @@ export const prisma =
   new PrismaClient({
     datasources: {
       db: {
-        url: databaseUrl,
+        url: databaseUrl || fallbackUrl,
       },
     },
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
