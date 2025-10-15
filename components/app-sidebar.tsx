@@ -17,6 +17,7 @@ import {
   WalletIcon,
   FolderKanbanIcon,
   Users2Icon,
+  BriefcaseIcon,
   type LucideIcon,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
@@ -92,6 +93,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Teams Management",
         url: "/dashboard/teams",
         icon: UsersIcon,
+      });
+    }
+    
+    // Human Resources - staff and above
+    if (permissions.canViewTeam) {
+      items.push({
+        title: "Human Resources",
+        url: "/dashboard/hr",
+        icon: BriefcaseIcon,
       });
     }
     
@@ -179,6 +189,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         name: "Finance",
         url: "/dashboard/finance",
         icon: WalletIcon,
+      });
+    }
+    
+    // Human Resources - staff and above
+    if (permissions.canViewTeam) {
+      items.push({
+        name: "Human Resources",
+        url: "/dashboard/hr",
+        icon: BriefcaseIcon,
       });
     }
     
