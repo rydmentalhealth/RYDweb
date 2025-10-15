@@ -48,10 +48,15 @@ const projectSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   status: z.string(),
+  priority: z.string(),
+  department: z.string().optional(),
+  projectLeadId: z.string().optional(),
   startDate: z.date({
     required_error: "Start date is required",
   }),
   endDate: z.date().optional().nullable(),
+  googleDriveFolderId: z.string().optional(),
+  notionPageId: z.string().optional(),
 });
 
 export function AddProjectSheet({ trigger, onSuccess }: AddProjectSheetProps) {
@@ -65,8 +70,13 @@ export function AddProjectSheet({ trigger, onSuccess }: AddProjectSheetProps) {
       name: "",
       description: "",
       status: "PLANNING",
+      priority: "MEDIUM",
+      department: "",
+      projectLeadId: "",
       startDate: new Date(),
       endDate: null,
+      googleDriveFolderId: "",
+      notionPageId: "",
     },
   })
   
@@ -222,6 +232,80 @@ export function AddProjectSheet({ trigger, onSuccess }: AddProjectSheetProps) {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Priority */}
+          <div className="space-y-2">
+            <Label htmlFor="priority">Priority</Label>
+            <Select
+              value={form.watch("priority")}
+              onValueChange={(value) => handleSelectChange("priority", value)}
+            >
+              <SelectTrigger id="priority">
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="LOW">Low</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="HIGH">High</SelectItem>
+                <SelectItem value="URGENT">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Department */}
+          <div className="space-y-2">
+            <Label htmlFor="department">Department</Label>
+            <Select
+              value={form.watch("department")}
+              onValueChange={(value) => handleSelectChange("department", value)}
+            >
+              <SelectTrigger id="department">
+                <SelectValue placeholder="Select department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="OUTREACH">Outreach</SelectItem>
+                <SelectItem value="THERAPY">Therapy</SelectItem>
+                <SelectItem value="IT">IT</SelectItem>
+                <SelectItem value="MEDIA">Media</SelectItem>
+                <SelectItem value="RESEARCH">Research</SelectItem>
+                <SelectItem value="ADMINISTRATION">Administration</SelectItem>
+                <SelectItem value="FINANCE">Finance</SelectItem>
+                <SelectItem value="HR">HR</SelectItem>
+                <SelectItem value="OTHER">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Project Lead */}
+          <div className="space-y-2">
+            <Label htmlFor="projectLeadId">Project Lead</Label>
+            <Select
+              value={form.watch("projectLeadId")}
+              onValueChange={(value) => handleSelectChange("projectLeadId", value)}
+            >
+              <SelectTrigger id="projectLeadId">
+                <SelectValue placeholder="Select project lead" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingTeamMembers ? (
+                  <SelectItem value="loading" disabled>
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  </SelectItem>
+                ) : activeTeamMembers.length === 0 ? (
+                  <SelectItem value="no-members" disabled>No active team members found</SelectItem>
+                ) : (
+                  activeTeamMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.firstName} {member.lastName}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
           
           {/* Start Date */}
           <div className="space-y-2">
@@ -259,7 +343,7 @@ export function AddProjectSheet({ trigger, onSuccess }: AddProjectSheetProps) {
           
           {/* End Date */}
           <div className="space-y-2">
-            <Label>End Date</Label>
+            <Label>Expected End Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -286,6 +370,32 @@ export function AddProjectSheet({ trigger, onSuccess }: AddProjectSheetProps) {
                 />
               </PopoverContent>
             </Popover>
+          </div>
+
+          {/* Google Drive Integration */}
+          <div className="space-y-2">
+            <Label htmlFor="googleDriveFolderId">Google Drive Folder ID (Optional)</Label>
+            <Input
+              id="googleDriveFolderId"
+              placeholder="Enter Google Drive folder ID"
+              {...form.register("googleDriveFolderId")}
+            />
+            <p className="text-xs text-muted-foreground">
+              Link to a Google Drive folder for project collaboration
+            </p>
+          </div>
+
+          {/* Notion Integration */}
+          <div className="space-y-2">
+            <Label htmlFor="notionPageId">Notion Page ID (Optional)</Label>
+            <Input
+              id="notionPageId"
+              placeholder="Enter Notion page ID"
+              {...form.register("notionPageId")}
+            />
+            <p className="text-xs text-muted-foreground">
+              Link to a Notion page for project documentation
+            </p>
           </div>
           
           {/* Team Members */}

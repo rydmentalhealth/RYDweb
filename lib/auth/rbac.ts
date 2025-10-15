@@ -112,6 +112,35 @@ export const PERMISSIONS = {
   MANAGE_PROJECT_MEMBERS: (userRole: UserRole) => isStaffOrAbove(userRole),
   VIEW_PROJECT_ANALYTICS: (userRole: UserRole) => isStaffOrAbove(userRole),
   
+  // Project milestones
+  VIEW_MILESTONES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  CREATE_MILESTONES: (userRole: UserRole) => isStaffOrAbove(userRole),
+  EDIT_MILESTONES: (userRole: UserRole) => isStaffOrAbove(userRole),
+  DELETE_MILESTONES: (userRole: UserRole) => isStaffOrAbove(userRole),
+  MANAGE_MILESTONE_PROGRESS: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  
+  // Progress updates
+  VIEW_PROGRESS_UPDATES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  CREATE_PROGRESS_UPDATES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  EDIT_OWN_PROGRESS_UPDATES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  EDIT_ALL_PROGRESS_UPDATES: (userRole: UserRole) => isStaffOrAbove(userRole),
+  DELETE_OWN_PROGRESS_UPDATES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  DELETE_ALL_PROGRESS_UPDATES: (userRole: UserRole) => isStaffOrAbove(userRole),
+  APPROVE_PROGRESS_UPDATES: (userRole: UserRole) => isStaffOrAbove(userRole),
+  
+  // Project resources
+  VIEW_PROJECT_RESOURCES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  UPLOAD_PROJECT_RESOURCES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  EDIT_OWN_PROJECT_RESOURCES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  EDIT_ALL_PROJECT_RESOURCES: (userRole: UserRole) => isStaffOrAbove(userRole),
+  DELETE_OWN_PROJECT_RESOURCES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  DELETE_ALL_PROJECT_RESOURCES: (userRole: UserRole) => isStaffOrAbove(userRole),
+  
+  // Project timeline and reporting
+  VIEW_PROJECT_TIMELINE: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  EXPORT_PROJECT_REPORTS: (userRole: UserRole) => isStaffOrAbove(userRole),
+  GENERATE_PROJECT_ANALYTICS: (userRole: UserRole) => isStaffOrAbove(userRole),
+  
   // Task management
   VIEW_TASKS: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
   VIEW_ALL_TASKS: (userRole: UserRole) => isStaffOrAbove(userRole),
