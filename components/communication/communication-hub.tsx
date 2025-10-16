@@ -121,13 +121,35 @@ export function CommunicationHub() {
   const [messageInput, setMessageInput] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
 
+  // Check URL params for initial tab
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const tab = urlParams.get('tab')
+    if (tab && ['newsfeed', 'chat', 'bulletins', 'polls'].includes(tab)) {
+      setActiveTab(tab)
+    }
+  }, [])
+
+  // Auto-select user's department chat when chat tab is opened
+  useEffect(() => {
+    if (activeTab === 'chat' && !selectedChannel && channelsData?.channels) {
+      // Find user's department channel
+      const departmentChannel = channelsData.channels.find(
+        (channel: Channel) => channel.type === 'DEPARTMENT'
+      )
+      if (departmentChannel) {
+        setSelectedChannel(departmentChannel.id)
+      }
+    }
+  }, [activeTab, channelsData, selectedChannel])
+
   const queryClient = useQueryClient()
 
-  // Fetch channels
+  // Fetch channels (including department-based channels)
   const { data: channelsData } = useQuery({
     queryKey: ['communication', 'channels'],
     queryFn: async () => {
-      const response = await fetch('/api/communication/channels')
+      const response = await fetch('/api/communication/channels?includeDepartment=true')
       if (!response.ok) throw new Error('Failed to fetch channels')
       return response.json()
     },

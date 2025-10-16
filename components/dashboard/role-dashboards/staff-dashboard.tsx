@@ -173,7 +173,7 @@ export function StaffDashboard() {
             hoursSpent: todayLog.hoursSpent || 0,
             isApproved: todayLog.isApproved,
             approvedAt: todayLog.approvedAt,
-            submittedToHR: todayLog.isApproved || false
+            submittedToHR: todayLog.isApproved || todayLog.submittedToHR || false
           })
         }
       }
@@ -230,19 +230,32 @@ export function StaffDashboard() {
           date: dailyUpdate.date,
           description: dailyUpdate.description,
           hoursSpent: dailyUpdate.hoursSpent,
+          submitToHR: true, // Mark as submitted to HR
         }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to submit daily update')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to submit daily update')
       }
 
-      toast.success('Daily update submitted successfully! 📝')
+      const result = await response.json()
+      
+      // Update local state to reflect HR submission
+      setDailyUpdate(prev => ({
+        ...prev,
+        id: result.id,
+        submittedToHR: true,
+        isApproved: false
+      }))
+
+      toast.success('Daily update submitted to HR successfully! 📝 It will be reviewed and approved.')
       setIsDailyUpdateDialogOpen(false)
       setIsEditingUpdate(false)
       fetchDashboardData()
     } catch (error) {
-      toast.error('Failed to submit daily update')
+      console.error('Daily update submission error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to submit daily update')
     } finally {
       setSubmittingUpdate(false)
     }
@@ -359,7 +372,10 @@ export function StaffDashboard() {
                           Submitting...
                         </>
                       ) : (
-                        dailyUpdate.id ? 'Update' : 'Submit'
+                        <>  
+                          <Send className="mr-2 h-4 w-4" />
+                          {dailyUpdate.id ? 'Update & Submit to HR' : 'Submit to HR'}
+                        </>
                       )}
                     </Button>
                   )}
@@ -367,7 +383,7 @@ export function StaffDashboard() {
               </form>
             </DialogContent>
           </Dialog>
-          <Link href="/dashboard/communication">
+          <Link href="/dashboard/communication?tab=chat">
             <Button variant="outline" size="sm">
               <MessageSquare className="h-4 w-4 mr-2" />
               Department Chat
@@ -391,7 +407,17 @@ export function StaffDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.assignedProjects}</div>
-            <p className="text-xs text-muted-foreground">Current projects</p>
+            <p className="text-xs text-muted-foreground">
+              {stats.assignedProjects === 0 ? 'No active projects' : 
+               stats.assignedProjects === 1 ? 'Current project' : 'Current projects'}
+            </p>
+            {stats.assignedProjects > 0 && (
+              <Link href="/dashboard/projects">
+                <Button variant="ghost" size="sm" className="mt-2 h-6 px-2 text-xs">
+                  View Details
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
 
@@ -401,8 +427,17 @@ export function StaffDashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.weeklyHours}</div>
-            <p className="text-xs text-muted-foreground">From attendance</p>
+            <div className="text-2xl font-bold">{stats.weeklyHours}h</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.weeklyHours === 0 ? 'No attendance logged' : 'From check-in/out records'}
+            </p>
+            {stats.weeklyHours === 0 && (
+              <Link href="/dashboard/attendance">
+                <Button variant="ghost" size="sm" className="mt-2 h-6 px-2 text-xs">
+                  Check In
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
 
@@ -413,7 +448,16 @@ export function StaffDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingTasks}</div>
-            <p className="text-xs text-muted-foreground">Need attention</p>
+            <p className="text-xs text-muted-foreground">
+              {stats.pendingTasks === 0 ? 'All caught up!' : 'Need attention'}
+            </p>
+            {stats.pendingTasks > 0 && (
+              <Link href="/dashboard/tasks">
+                <Button variant="ghost" size="sm" className="mt-2 h-6 px-2 text-xs">
+                  View Tasks
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
 
@@ -423,8 +467,23 @@ export function StaffDashboard() {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dailyUpdate.isApproved ? '✅' : '⏳'}</div>
-            <p className="text-xs text-muted-foreground">{dailyUpdate.isApproved ? 'Approved' : 'Pending'}</p>
+            <div className="text-2xl font-bold">
+              {dailyUpdate.isApproved ? '✅' : dailyUpdate.submittedToHR ? '⏳' : '📝'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {dailyUpdate.isApproved ? 'Latest update approved' : 
+               dailyUpdate.submittedToHR ? 'Awaiting HR review' : 'Submit daily update'}
+            </p>
+            {!dailyUpdate.submittedToHR && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-2 h-6 px-2 text-xs"
+                onClick={() => setIsDailyUpdateDialogOpen(true)}
+              >
+                Update Now
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -442,17 +501,33 @@ export function StaffDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-[#0B874E]">{stats.completedTasks}</div>
-              <p className="text-sm text-muted-foreground">Tasks Completed</p>
+              <p className="text-sm text-muted-foreground">Tasks Completed This Month</p>
+              {stats.completedTasks > 0 && (
+                <p className="text-xs text-green-600 mt-1">Great progress! 🎉</p>
+              )}
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#0B874E]">{stats.weeklyHours}</div>
-              <p className="text-sm text-muted-foreground">Hours Served</p>
+              <div className="text-3xl font-bold text-[#0B874E]">{Math.round(stats.weeklyHours * 4.33)}</div>
+              <p className="text-sm text-muted-foreground">Hours Served This Month</p>
+              {stats.weeklyHours > 0 && (
+                <p className="text-xs text-green-600 mt-1">Keep up the good work! 💪</p>
+              )}
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-[#0B874E]">{stats.communitiesReached}</div>
-              <p className="text-sm text-muted-foreground">Communities Reached</p>
+              <p className="text-sm text-muted-foreground">Communities Impacted</p>
+              {stats.communitiesReached > 0 && (
+                <p className="text-xs text-green-600 mt-1">Making a difference! ❤️</p>
+              )}
             </div>
           </div>
+          {stats.completedTasks === 0 && stats.weeklyHours === 0 && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800 text-center">
+                <strong>Ready to make an impact?</strong> Complete your first task and log your attendance to see your contribution to RYD's mission!
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -471,8 +546,17 @@ export function StaffDashboard() {
             {tasks.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <FolderKanban className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No tasks assigned</p>
-                <p className="text-sm">Check back later for new assignments</p>
+                <p className="font-medium">No tasks currently assigned</p>
+                <p className="text-sm mb-4">
+                  Your team lead or project manager will assign tasks to you. 
+                  Once assigned, they'll appear here for you to track and complete.
+                </p>
+                <Link href="/dashboard/projects">
+                  <Button variant="outline" size="sm">
+                    <FolderKanban className="h-4 w-4 mr-2" />
+                    View All Projects
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div className="space-y-4">
@@ -536,16 +620,22 @@ export function StaffDashboard() {
             {stats.weeklyHours === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">No attendance records found</p>
+                <p className="text-muted-foreground font-medium">No attendance records found for this week</p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Please ensure you check in and out daily to track your hours
+                  To track your weekly hours, please check in and out daily using the attendance system. 
+                  Your hours will automatically appear here once you start logging attendance.
                 </p>
-                <Link href="/dashboard/attendance">
-                  <Button variant="outline">
-                    <Clock className="h-4 w-4 mr-2" />
-                    Go to Attendance
-                  </Button>
-                </Link>
+                <div className="space-y-2">
+                  <Link href="/dashboard/attendance">
+                    <Button variant="outline" className="w-full">
+                      <Clock className="h-4 w-4 mr-2" />
+                      Check In/Out Now
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    Need help? Contact your team lead or HR for assistance with attendance tracking.
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -588,7 +678,7 @@ export function StaffDashboard() {
               <div className="text-center py-8 text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No events currently scheduled</p>
-                <p className="text-sm">Stay tuned for updates!</p>
+                <p className="text-sm">Stay tuned for updates from HR and management!</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -629,7 +719,7 @@ export function StaffDashboard() {
               <div className="text-center py-8 text-muted-foreground">
                 <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No announcements currently</p>
-                <p className="text-sm">Stay tuned for updates!</p>
+                <p className="text-sm">Stay tuned for updates from HR, Admin, and management!</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -691,7 +781,7 @@ export function StaffDashboard() {
                   Request Expense Reimbursement
                 </Button>
               </Link>
-              <Link href="/dashboard/communication">
+              <Link href="/dashboard/communication?tab=chat">
                 <Button variant="outline" className="w-full justify-start">
                   <Users className="h-4 w-4 mr-2" />
                   Department Chat

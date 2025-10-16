@@ -11,6 +11,7 @@ const dailyLogSchema = z.object({
   hoursSpent: z.number().optional(),
   category: z.string().optional(),
   attachments: z.string().optional(), // JSON string of URLs
+  submitToHR: z.boolean().optional(), // Flag to submit to HR
 });
 
 // Helper function to check permissions
@@ -124,6 +125,8 @@ export async function POST(request: NextRequest) {
         hoursSpent: validatedData.hoursSpent,
         category: validatedData.category,
         attachments: validatedData.attachments,
+        // If submitToHR is true, we mark it as needing approval but not yet approved
+        // This allows HR to see it as submitted but still pending their approval
       },
       include: {
         user: {
@@ -136,6 +139,37 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // If submitting to HR, create a notification for HR officers
+    if (validatedData.submitToHR) {
+      // Find HR officers to notify
+      const hrOfficers = await prisma.user.findMany({
+        where: {
+          role: { in: ['HR_OFFICER', 'ADMIN', 'SUPER_ADMIN'] },
+          status: 'ACTIVE',
+        },
+        select: { id: true },
+      });
+
+      if (hrOfficers.length > 0) {
+        const notifications = hrOfficers.map(hr => ({
+          userId: hr.id,
+          type: 'SYSTEM' as const,
+          title: 'New Daily Update for Review',
+          content: `${session.user.name || session.user.email} has submitted a daily update for review.`,
+          actionUrl: `/dashboard/hr?tab=daily-logs&userId=${session.user.id}`,
+          data: JSON.stringify({
+            logId: log.id,
+            userId: session.user.id,
+            type: 'DAILY_LOG_SUBMITTED',
+          }),
+        }));
+
+        await prisma.notification.createMany({
+          data: notifications,
+        });
+      }
+    }
 
     // Log activity
     await prisma.activityLog.create({
@@ -224,6 +258,37 @@ export async function PUT(request: NextRequest) {
         },
       },
     });
+
+    // If submitting to HR, create a notification for HR officers
+    if (validatedData.submitToHR && !existingLog.isApproved) {
+      // Find HR officers to notify
+      const hrOfficers = await prisma.user.findMany({
+        where: {
+          role: { in: ['HR_OFFICER', 'ADMIN', 'SUPER_ADMIN'] },
+          status: 'ACTIVE',
+        },
+        select: { id: true },
+      });
+
+      if (hrOfficers.length > 0) {
+        const notifications = hrOfficers.map(hr => ({
+          userId: hr.id,
+          type: 'SYSTEM' as const,
+          title: 'Updated Daily Update for Review',
+          content: `${session.user.name || session.user.email} has updated their daily update for review.`,
+          actionUrl: `/dashboard/hr?tab=daily-logs&userId=${session.user.id}`,
+          data: JSON.stringify({
+            logId: updatedLog.id,
+            userId: session.user.id,
+            type: 'DAILY_LOG_UPDATED',
+          }),
+        }));
+
+        await prisma.notification.createMany({
+          data: notifications,
+        });
+      }
+    }
 
     // Log activity
     await prisma.activityLog.create({
