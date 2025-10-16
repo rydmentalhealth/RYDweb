@@ -104,6 +104,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = dailyLogSchema.parse(body);
 
+    // Check if a log already exists for this date
+    const existingLog = await prisma.dailyTaskLog.findFirst({
+      where: {
+        userId: session.user.id,
+        date: new Date(validatedData.date),
+      },
+    });
+
+    if (existingLog) {
+      return NextResponse.json({ error: 'Daily log already exists for this date. Use PUT to update.' }, { status: 400 });
+    }
+
     const log = await prisma.dailyTaskLog.create({
       data: {
         userId: session.user.id,
@@ -138,6 +150,94 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(log, { status: 201 });
   } catch (error) {
     console.error('Error creating daily log:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// PUT /api/attendance/daily-logs - Update daily task log
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, ...updateData } = body;
+    const validatedData = dailyLogSchema.parse(updateData);
+
+    if (!id) {
+      return NextResponse.json({ error: 'Log ID is required for updates' }, { status: 400 });
+    }
+
+    // Find the existing log
+    const existingLog = await prisma.dailyTaskLog.findUnique({
+      where: { id },
+      include: {
+        approvedBy: true,
+      },
+    });
+
+    if (!existingLog) {
+      return NextResponse.json({ error: 'Daily log not found' }, { status: 404 });
+    }
+
+    // Check if user owns the log
+    if (existingLog.userId !== session.user.id) {
+      return NextResponse.json({ error: 'You can only edit your own logs' }, { status: 403 });
+    }
+
+    // Check if log has been approved (submitted to HR)
+    if (existingLog.isApproved) {
+      return NextResponse.json({ 
+        error: 'This log has been approved by HR and cannot be edited' 
+      }, { status: 403 });
+    }
+
+    const updatedLog = await prisma.dailyTaskLog.update({
+      where: { id },
+      data: {
+        date: new Date(validatedData.date),
+        description: validatedData.description,
+        hoursSpent: validatedData.hoursSpent,
+        category: validatedData.category,
+        attachments: validatedData.attachments,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+        approvedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: session.user.id,
+        action: 'UPDATE',
+        resource: 'daily_task_log',
+        resourceId: updatedLog.id,
+      },
+    });
+
+    return NextResponse.json(updatedLog);
+  } catch (error) {
+    console.error('Error updating daily log:', error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 });
     }

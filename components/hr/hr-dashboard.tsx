@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { EmployeeManagement } from './employee-management'
 import { Recruitment } from './recruitment'
+import { EventsManagement } from './events-management'
 
 interface HRStats {
   totalEmployees: number
@@ -210,9 +211,10 @@ export function HRDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="employees" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="employees">Employees</TabsTrigger>
           <TabsTrigger value="recruitment">Recruitment</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="training">Training</TabsTrigger>
           <TabsTrigger value="policies">Policies</TabsTrigger>
@@ -225,6 +227,10 @@ export function HRDashboard() {
 
         <TabsContent value="recruitment" className="mt-6">
           <Recruitment />
+        </TabsContent>
+
+        <TabsContent value="events" className="mt-6">
+          <EventsManagement />
         </TabsContent>
 
         <TabsContent value="performance" className="mt-6">
