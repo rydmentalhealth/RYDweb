@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "build:quick": "TS_NODE_TRANSPILE_ONLY=true next build --no-lint",
-    "build:skip-checks": "NEXT_SKIP_TYPE_CHECK=true next build --no-lint",
+    "build": "npx prisma generate && next build",
+    "build:quick": "npx prisma generate && TS_NODE_TRANSPILE_ONLY=true next build --no-lint",
+    "build:skip-checks": "npx prisma generate && NEXT_SKIP_TYPE_CHECK=true next build --no-lint",
     "start": "next start",
     "lint": "next lint",
+    "postinstall": "npx prisma generate",
     "verify:auth": "node scripts/verify-auth-config.js",
     "check-env": "node scripts/check-env.js"
   },

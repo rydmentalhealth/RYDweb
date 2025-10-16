@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DatePickerWithRange } from "@/components/ui/date-range-picker"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { 
   AreaChart, 
   Area, 
@@ -456,7 +456,7 @@ export function EnterpriseDashboard() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium">Date Range</label>
-                  <DatePickerWithRange date={dateRange} onDateChange={setDateRange} />
+                  <DateRangePicker dateRange={dateRange} onSelect={setDateRange} />
                 </div>
                 <div>
                   <label className="text-sm font-medium">Department</label>

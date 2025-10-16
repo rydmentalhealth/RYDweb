@@ -123,6 +123,17 @@ model User {
   rewards         UserReward[]
   rewardsGranted  UserReward[] @relation("RewardGranter")
 
+  // Security & Compliance relations
+  auditLogs              AuditLog[]              @relation("AuditLogUser")
+  securitySessions       SecuritySession[]       @relation("SecuritySession")
+  rolePermissions        RolePermission[]        @relation("PermissionGranter")
+  backupsCreated         SystemBackup[]          @relation("BackupCreator")
+  dataPrivacyRequests    DataPrivacyRequest[]    @relation("DataPrivacyRequest")
+  privacyRequestsProcessed DataPrivacyRequest[]  @relation("PrivacyRequestProcessor")
+  reportTemplatesCreated ReportTemplate[]        @relation("ReportTemplateCreator")
+  reportsGenerated2      GeneratedReport[]       @relation("ReportGenerator")
+  dashboardConfigs       DashboardConfig[]       @relation("DashboardConfig")
+
   // Audit fields
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -1454,7 +1465,7 @@ model SystemBackup {
   createdBy     User?        @relation("BackupCreator", fields: [createdById], references: [id])
 
   @@index([backupType, status])
-  @@index([createdAt])
+  @@index([startedAt])
 }
 
 enum BackupType {
@@ -1608,112 +1619,3 @@ enum AlertLevel {
   CRITICAL
 }
 
-// Add new relations to User model
-model User {
-  id            String     @id @default(cuid())
-  // Authentication fields
-  email         String     @unique
-  emailVerified DateTime?
-  password      String?
-  role          UserRole   @default(VOLUNTEER)
-  status        UserStatus @default(PENDING)
-
-  // Profile fields (previously in TeamMember)
-  firstName        String?
-  lastName         String?
-  name             String? // Computed from firstName + lastName
-  avatar           String?
-  bio              String?
-  jobTitle         String?
-  department       String?
-  phone            String?
-  nationalId       String?
-  startDate        DateTime?
-  endDate          DateTime?
-  location         String?
-  district         String?
-  region           String?
-  languages        String?
-  skills           String?
-  emergencyContact String?
-  availability     Availability?
-  weeklyHours      Int?          @default(40)
-
-  // Authentication relations
-  accounts Account[]
-  sessions Session[]
-
-  // Application relations
-  timeEntries        TimeEntry[]
-  tasks              TaskAssignee[]
-  documents          Document[]
-  projectMemberships ProjectMember[]
-  projectsOwned      Project[]       @relation("ProjectOwner")
-  projectsLed        Project[]       @relation("ProjectLead")
-  comments           TaskComment[]
-  tasksCreated       Task[]          @relation("TaskCreator")
-  checkIns           CheckIn[]
-  teams              UserTeam[] // New: User team memberships
-
-  // Finance relations
-  stipends                Stipend[]
-  stipendsApproved        Stipend[]               @relation("StipendApproval")
-  expenseRequests         ExpenseRequest[]        @relation("ExpenseRequester")
-  expenseTeamLead         ExpenseRequest[]        @relation("ExpenseTeamLead")
-  expenseFinanceApproval  ExpenseRequest[]        @relation("ExpenseFinanceApproval")
-  expenseDirectorApproval ExpenseRequest[]        @relation("ExpenseDirectorApproval")
-  expenseAttachments      ExpenseAttachment[]
-  expenseComments         ExpenseComment[]
-  budgetsCreated          DepartmentBudget[]      @relation("BudgetCreator")
-  budgetsModified         DepartmentBudget[]      @relation("BudgetModifier")
-  budgetAdjustments       BudgetAdjustment[]
-  reportsGenerated        FinancialReport[]
-  // Project Management relations
-  milestoneResponsible    ProjectMilestone[]      @relation("MilestoneResponsible")
-  progressUpdates         ProjectProgressUpdate[] @relation("ProgressUpdateUser")
-  progressApprovals       ProjectProgressUpdate[] @relation("ProgressApprover")
-  projectActivities       ProjectActivityLog[]    @relation("ProjectActivityUser")
-  projectResources        ProjectResource[]       @relation("ProjectResourceUser")
-  milestoneAttachments    MilestoneAttachment[]
-
-  // Employee Management relations
-  employeeProfile    EmployeeProfile?
-  createdEmployees   EmployeeProfile[]   @relation("EmployeeCreatedBy")
-  uploadedDocuments  EmployeeDocument[]
-  performanceReviews PerformanceReview[]
-  approvedLeaves     LeaveRequest[]
-  privateNotes       PrivateNote[]
-  timelineEvents     TimelineEvent[]
-  welcomeNotes       WelcomeNote[]
-  activityLogs       ActivityLog[]
-
-  // Enhanced Attendance & Work Tracking relations
-  dailyTaskLogs    DailyTaskLog[]
-  approvedTaskLogs DailyTaskLog[] @relation("TaskLogApprover")
-  workSummaries    WorkSummary[]
-
-  // Enhanced Performance & Evaluation relations
-  kpisCreated     KPI[]        @relation("KPICreator")
-  reviews360Given Review360[]  @relation("Review360Reviewer")
-  rewards         UserReward[]
-  rewardsGranted  UserReward[] @relation("RewardGranter")
-
-  // Security & Compliance relations
-  auditLogs              AuditLog[]              @relation("AuditLogUser")
-  securitySessions       SecuritySession[]       @relation("SecuritySession")
-  rolePermissions        RolePermission[]        @relation("PermissionGranter")
-  backupsCreated         SystemBackup[]          @relation("BackupCreator")
-  dataPrivacyRequests    DataPrivacyRequest[]    @relation("DataPrivacyRequest")
-  privacyRequestsProcessed DataPrivacyRequest[]  @relation("PrivacyRequestProcessor")
-  reportTemplatesCreated ReportTemplate[]        @relation("ReportTemplateCreator")
-  reportsGenerated2      GeneratedReport[]       @relation("ReportGenerator")
-  dashboardConfigs       DashboardConfig[]       @relation("DashboardConfig")
-
-  // Audit fields
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  approvedAt    DateTime?
-  approvedById  String?
-  approvedBy    User?     @relation("UserApproval", fields: [approvedById], references: [id])
-  approvedUsers User[]    @relation("UserApproval")
-}
