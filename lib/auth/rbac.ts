@@ -7,7 +7,9 @@ export interface UserPermissions {
 
 // Define permission levels
 export const PERMISSION_LEVELS = {
-  SUPER_ADMIN: 4,
+  SUPER_ADMIN: 6,
+  CEO: 5,
+  CFO: 4,
   ADMIN: 3,
   STAFF: 2,
   VOLUNTEER: 1,
@@ -20,9 +22,24 @@ export function hasMinimumRole(userRole: UserRole, requiredRole: UserRole): bool
   return userLevel >= requiredLevel;
 }
 
-// Check if user is admin (ADMIN or SUPER_ADMIN)
+// Check if user is admin (ADMIN or above)
 export function isAdmin(userRole: UserRole): boolean {
-  return userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN;
+  return userRole === UserRole.ADMIN || userRole === UserRole.CFO || userRole === UserRole.CEO || userRole === UserRole.SUPER_ADMIN;
+}
+
+// Check if user is executive (CFO, CEO, or SUPER_ADMIN)
+export function isExecutive(userRole: UserRole): boolean {
+  return userRole === UserRole.CFO || userRole === UserRole.CEO || userRole === UserRole.SUPER_ADMIN;
+}
+
+// Check if user is CFO
+export function isCFO(userRole: UserRole): boolean {
+  return userRole === UserRole.CFO;
+}
+
+// Check if user is CEO
+export function isCEO(userRole: UserRole): boolean {
+  return userRole === UserRole.CEO;
 }
 
 // Check if user is super admin
@@ -159,12 +176,43 @@ export const PERMISSIONS = {
   EDIT_TEAM_MEMBERS: (userRole: UserRole) => isAdmin(userRole),
   DELETE_TEAM_MEMBERS: (userRole: UserRole) => isAdmin(userRole),
   
-  // Financial management
-  MANAGE_FINANCES: (userRole: UserRole) => isAdmin(userRole),
+  // Financial management - Enhanced with CFO/CEO roles
+  MANAGE_FINANCES: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
   VIEW_FINANCES: (userRole: UserRole) => isStaffOrAbove(userRole),
-  CREATE_TRANSACTIONS: (userRole: UserRole) => isAdmin(userRole),
-  EDIT_TRANSACTIONS: (userRole: UserRole) => isAdmin(userRole),
-  DELETE_TRANSACTIONS: (userRole: UserRole) => isAdmin(userRole),
+  CREATE_TRANSACTIONS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  EDIT_TRANSACTIONS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  DELETE_TRANSACTIONS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  
+  // Stipend Management
+  VIEW_STIPENDS: (userRole: UserRole) => isStaffOrAbove(userRole),
+  CREATE_STIPENDS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN || userRole === UserRole.HR_OFFICER,
+  EDIT_STIPENDS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  DELETE_STIPENDS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  APPROVE_STIPENDS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  
+  // Expense Management
+  VIEW_EXPENSES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  CREATE_EXPENSES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  EDIT_OWN_EXPENSES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  EDIT_ALL_EXPENSES: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  DELETE_OWN_EXPENSES: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
+  DELETE_ALL_EXPENSES: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  APPROVE_EXPENSES_TL: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.TEAM_LEAD),
+  APPROVE_EXPENSES_FINANCE: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  APPROVE_EXPENSES_DIRECTOR: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.DIRECTOR),
+  
+  // Budget Management
+  VIEW_BUDGETS: (userRole: UserRole) => isStaffOrAbove(userRole),
+  CREATE_BUDGETS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  EDIT_BUDGETS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  DELETE_BUDGETS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  ADJUST_BUDGETS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  
+  // Financial Reports
+  VIEW_FINANCIAL_REPORTS: (userRole: UserRole) => isStaffOrAbove(userRole),
+  GENERATE_FINANCIAL_REPORTS: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  EXPORT_FINANCIAL_DATA: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
+  VIEW_SENSITIVE_FINANCIAL_DATA: (userRole: UserRole) => isExecutive(userRole) || userRole === UserRole.ADMIN,
   
   // Document management
   UPLOAD_DOCUMENTS: (userRole: UserRole) => hasMinimumRole(userRole, UserRole.VOLUNTEER),
