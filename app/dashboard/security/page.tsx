@@ -10,7 +10,7 @@ export default function SecurityPage() {
   const permissions = usePermissions()
 
   // Only Super Admin can access the Security Control Panel
-  if (permissions.role !== UserRole.SUPER_ADMIN) {
+  if (!permissions.isSuperAdmin) {
     return (
       <div className="flex flex-col gap-6 py-6">
         <div className="px-4 md:px-6">

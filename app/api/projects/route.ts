@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkProjectPermissions, hasPermission } from "@/lib/auth/rbac";
 import { auth } from "@/lib/auth";
 import { UserRole, UserStatus, ProjectStatus, ProjectPriority } from "@prisma/client";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/db";
 
 // GET /api/projects - Get projects with permission filtering
 export async function GET(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
     
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: session.user?.email || "" },
     });
     console.log("[API Projects] User found:", user?.email, "Role:", user?.role, "Status:", user?.status);
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     console.log("[API Projects] Final query filters:", JSON.stringify(filters, null, 2));
 
     // Fetch projects with filters
-    const projects = await db.project.findMany({
+    const projects = await prisma.project.findMany({
       where: filters,
       orderBy: {
         createdAt: "desc",
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Get the current user to set as creator
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: session.user?.email || "" },
     });
 
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
     
     // Validate that all member IDs exist and are active users
     if (memberIds.length > 0) {
-      const validMembers = await db.user.findMany({
+      const validMembers = await prisma.user.findMany({
         where: {
           id: { in: memberIds },
           status: UserStatus.ACTIVE
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
     }
                       
     // Create the project
-    const project = await db.project.create({
+    const project = await prisma.project.create({
       data: {
         name: data.name,
         description: data.description,

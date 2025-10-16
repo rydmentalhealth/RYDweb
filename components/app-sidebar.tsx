@@ -77,6 +77,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/dashboard",
         icon: LayoutDashboardIcon,
     });
+
+    // Chat - accessible to all authenticated users
+    items.push({
+        title: "Chat",
+        url: "/dashboard/chat",
+        icon: MessageSquareIcon,
+    });
     
     // Team Members - staff and above with pending badge for admins
     if (permissions.canViewTeam) {

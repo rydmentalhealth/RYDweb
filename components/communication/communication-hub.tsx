@@ -123,6 +123,22 @@ export function CommunicationHub() {
 
   const queryClient = useQueryClient()
 
+  // Handle URL parameters
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const channelParam = urlParams.get('channel')
+      const tabParam = urlParams.get('tab')
+      
+      if (channelParam) {
+        setSelectedChannel(channelParam)
+      }
+      if (tabParam) {
+        setActiveTab(tabParam)
+      }
+    }
+  }, [])
+
   // Fetch channels
   const { data: channelsData } = useQuery({
     queryKey: ['communication', 'channels'],

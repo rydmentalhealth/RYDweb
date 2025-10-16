@@ -34,7 +34,8 @@ import {
   Loader2,
   Edit,
   Save,
-  Eye
+  Eye,
+  Settings
 } from "lucide-react"
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar'
 import 'react-circular-progressbar/dist/styles.css'
@@ -155,11 +156,17 @@ export function StaffDashboard() {
       if (eventsRes.ok) {
         const eventsData = await eventsRes.json()
         setEvents(eventsData.events || [])
+      } else {
+        console.warn('Failed to fetch events:', eventsRes.status)
+        setEvents([])
       }
 
       if (announcementsRes.ok) {
         const announcementsData = await announcementsRes.json()
         setAnnouncements(announcementsData.announcements || [])
+      } else {
+        console.warn('Failed to fetch announcements:', announcementsRes.status)
+        setAnnouncements([])
       }
 
       if (dailyUpdateRes.ok) {
@@ -237,7 +244,18 @@ export function StaffDashboard() {
         throw new Error('Failed to submit daily update')
       }
 
-      toast.success('Daily update submitted successfully! 📝')
+      const result = await response.json()
+      
+      // Update local state
+      setDailyUpdate(prev => ({
+        ...prev,
+        id: result.id,
+        isApproved: result.isApproved,
+        approvedAt: result.approvedAt,
+        submittedToHR: false // Not submitted to HR yet, just saved
+      }))
+
+      toast.success('Daily update saved successfully! 📝')
       setIsDailyUpdateDialogOpen(false)
       setIsEditingUpdate(false)
       fetchDashboardData()
@@ -248,22 +266,62 @@ export function StaffDashboard() {
     }
   }
 
-  const handleTaskComplete = async (taskId: string) => {
+  const handleSubmitToHR = async () => {
+    if (!dailyUpdate.id) {
+      toast.error('Please save your daily update first')
+      return
+    }
+
+    setSubmittingUpdate(true)
+
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PUT',
+      const response = await fetch(`/api/attendance/daily-logs/${dailyUpdate.id}/submit`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'COMPLETED' }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update task')
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to submit to HR')
       }
 
-      toast.success('Task marked as completed! ✅')
+      const result = await response.json()
+      
+      // Update local state
+      setDailyUpdate(prev => ({
+        ...prev,
+        submittedToHR: true,
+        isApproved: result.isApproved,
+        approvedAt: result.approvedAt,
+      }))
+
+      toast.success('Daily update submitted to HR successfully! 🚀')
+      setIsDailyUpdateDialogOpen(false)
       fetchDashboardData()
     } catch (error) {
-      toast.error('Failed to update task')
+      toast.error(error instanceof Error ? error.message : 'Failed to submit to HR')
+    } finally {
+      setSubmittingUpdate(false)
+    }
+  }
+
+  const handleTaskComplete = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to complete task')
+      }
+
+      const result = await response.json()
+      toast.success(result.message || 'Task marked as completed! ✅')
+      fetchDashboardData()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to complete task')
     }
   }
 
@@ -352,31 +410,79 @@ export function StaffDashboard() {
                     {dailyUpdate.submittedToHR ? 'Close' : 'Cancel'}
                   </Button>
                   {!dailyUpdate.submittedToHR && (
-                    <Button type="submit" disabled={submittingUpdate}>
-                      {submittingUpdate ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Submitting...
-                        </>
-                      ) : (
-                        dailyUpdate.id ? 'Update' : 'Submit'
+                    <>
+                      <Button type="submit" disabled={submittingUpdate} variant="outline">
+                        {submittingUpdate ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            {dailyUpdate.id ? 'Save Changes' : 'Save Draft'}
+                          </>
+                        )}
+                      </Button>
+                      {dailyUpdate.id && (
+                        <Button 
+                          type="button" 
+                          onClick={handleSubmitToHR}
+                          disabled={submittingUpdate}
+                          className="bg-[#0B874E] hover:bg-[#0B874E]/90"
+                        >
+                          {submittingUpdate ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="mr-2 h-4 w-4" />
+                              Submit to HR
+                            </>
+                          )}
+                        </Button>
                       )}
-                    </Button>
+                    </>
                   )}
                 </div>
               </form>
             </DialogContent>
           </Dialog>
-          <Link href="/dashboard/communication">
-            <Button variant="outline" size="sm">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Department Chat
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={async () => {
+              try {
+                // Get or create department channel
+                const response = await fetch('/api/communication/channels/department')
+                if (response.ok) {
+                  const data = await response.json()
+                  // Redirect to communication page with the department channel selected
+                  window.location.href = `/dashboard/communication?channel=${data.channel.id}&tab=chat`
+                } else {
+                  const error = await response.json()
+                  toast.error(error.error || 'Failed to access department chat')
+                }
+              } catch (error) {
+                toast.error('Failed to access department chat')
+              }
+            }}
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Department Chat
+          </Button>
           <Link href="/dashboard/finance">
             <Button size="sm" className="bg-[#0B874E] hover:bg-[#0B874E]/90">
               <DollarSign className="h-4 w-4 mr-2" />
               Request Expense
+            </Button>
+          </Link>
+          <Link href="/dashboard/settings">
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
             </Button>
           </Link>
         </div>
@@ -536,16 +642,22 @@ export function StaffDashboard() {
             {stats.weeklyHours === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">No attendance records found</p>
+                <p className="text-muted-foreground font-medium">No attendance records found for this week</p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Please ensure you check in and out daily to track your hours
+                  To track your working hours, please use the check-in/check-out system daily. 
+                  This helps us maintain accurate records and generate your weekly reports.
                 </p>
-                <Link href="/dashboard/attendance">
-                  <Button variant="outline">
-                    <Clock className="h-4 w-4 mr-2" />
-                    Go to Attendance
-                  </Button>
-                </Link>
+                <div className="space-y-2">
+                  <Link href="/dashboard/attendance">
+                    <Button variant="outline" className="w-full">
+                      <Clock className="h-4 w-4 mr-2" />
+                      Go to Attendance System
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    Remember to check in when you start work and check out when you finish
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -588,7 +700,10 @@ export function StaffDashboard() {
               <div className="text-center py-8 text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No events currently scheduled</p>
-                <p className="text-sm">Stay tuned for updates!</p>
+                <p className="text-sm">Stay tuned for updates from HR and management!</p>
+                <p className="text-xs mt-2 text-muted-foreground/70">
+                  Only HR, Admin, and Super Admin can create events
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -629,7 +744,10 @@ export function StaffDashboard() {
               <div className="text-center py-8 text-muted-foreground">
                 <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No announcements currently</p>
-                <p className="text-sm">Stay tuned for updates!</p>
+                <p className="text-sm">Stay tuned for updates from management!</p>
+                <p className="text-xs mt-2 text-muted-foreground/70">
+                  Only HR, Admin, Team Leads, and Super Admin can create announcements
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -691,16 +809,39 @@ export function StaffDashboard() {
                   Request Expense Reimbursement
                 </Button>
               </Link>
-              <Link href="/dashboard/communication">
-                <Button variant="outline" className="w-full justify-start">
-                  <Users className="h-4 w-4 mr-2" />
-                  Department Chat
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={async () => {
+                  try {
+                    // Get or create department channel
+                    const response = await fetch('/api/communication/channels/department')
+                    if (response.ok) {
+                      const data = await response.json()
+                      // Redirect to communication page with the department channel selected
+                      window.location.href = `/dashboard/communication?channel=${data.channel.id}&tab=chat`
+                    } else {
+                      const error = await response.json()
+                      toast.error(error.error || 'Failed to access department chat')
+                    }
+                  } catch (error) {
+                    toast.error('Failed to access department chat')
+                  }
+                }}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Department Chat
+              </Button>
               <Link href="/dashboard/attendance">
                 <Button variant="outline" className="w-full justify-start">
                   <Clock className="h-4 w-4 mr-2" />
                   Check In/Out
+                </Button>
+              </Link>
+              <Link href="/dashboard/chat">
+                <Button variant="outline" className="w-full justify-start">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Open Chat
                 </Button>
               </Link>
             </div>
