@@ -18,6 +18,7 @@ import {
   FolderKanbanIcon,
   Users2Icon,
   BriefcaseIcon,
+  ShieldIcon,
   type LucideIcon,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
@@ -143,6 +144,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Analytics",
         url: "/dashboard/analytics",
         icon: BarChartIcon,
+      });
+    }
+    
+    // Security - Super Admin only
+    if (permissions.isSuperAdmin) {
+      items.push({
+        title: "Security",
+        url: "/dashboard/security",
+        icon: ShieldIcon,
       });
     }
     
