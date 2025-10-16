@@ -1,22 +1,22 @@
 "use client"
 
-import { AnalyticsOverview } from "@/components/dashboard/analytics/analytics-overview"
+import { OrganizationIdGenerator } from "@/components/dashboard/id-generator/organization-id-generator"
 import { usePermissions } from "@/lib/hooks/usePermissions"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ShieldAlert } from "lucide-react"
 
-export default function AnalyticsPage() {
+export default function IdGeneratorPage() {
   const permissions = usePermissions()
 
-  // Check if user has permission to view analytics
-  if (!permissions.canViewAnalytics) {
+  // Only Super Admin and Admin can access this page
+  if (!permissions.isAdmin && !permissions.isSuperAdmin) {
     return (
       <div className="flex flex-col gap-6 py-6">
         <div className="px-4 md:px-6">
           <Alert>
             <ShieldAlert className="h-4 w-4" />
             <AlertDescription>
-              You don't have permission to access Analytics. This feature is only available to Staff and above.
+              You don't have permission to access the ID Generator. This feature is only available to Administrators and Super Administrators.
             </AlertDescription>
           </Alert>
         </div>
@@ -27,8 +27,8 @@ export default function AnalyticsPage() {
   return (
     <div className="flex flex-col gap-6 py-6">
       <div className="px-4 md:px-6">
-        <AnalyticsOverview />
+        <OrganizationIdGenerator />
       </div>
     </div>
   )
-} 
+}

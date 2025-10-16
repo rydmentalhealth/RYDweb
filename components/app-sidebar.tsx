@@ -146,6 +146,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       });
     }
     
+    // ID Generator - admin and above
+    if (permissions.isAdmin || permissions.isSuperAdmin) {
+      items.push({
+        title: "ID Generator",
+        url: "/dashboard/id-generator",
+        icon: FileTextIcon,
+      });
+    }
+    
     return items;
   }, [permissions, pendingCount, session?.user?.status]);
 
