@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { 
   Download, 
   FileText, 
@@ -20,143 +21,137 @@ import {
   UserCheck,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  CreditCard,
+  MapPin,
+  Phone,
+  Mail
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
+import { format, addMonths } from "date-fns"
 
-interface OrganizationMember {
+interface Employee {
   id: string
-  firstName: string
-  lastName: string
+  name: string
   email: string
   role: string
-  department: string
+  department?: string
   status: string
-  joinDate: Date
-  employeeId: string
+  createdAt: string
+  avatar?: string
   phoneNumber?: string
   position?: string
+  employeeProfile?: {
+    position?: string
+    department?: string
+    joinDate?: string
+  }
 }
 
-// Mock data - replace with real API calls
-const mockMembers: OrganizationMember[] = [
-  {
-    id: '1',
-    firstName: 'Sarah',
-    lastName: 'Nakato',
-    email: 'sarah.nakato@ryd.org',
-    role: 'STAFF',
-    department: 'Mental Health Services',
-    status: 'ACTIVE',
-    joinDate: new Date('2023-01-15'),
-    employeeId: 'RYD-MH-001',
-    phoneNumber: '+256 700 123 456',
-    position: 'Senior Counselor'
-  },
-  {
-    id: '2',
-    firstName: 'James',
-    lastName: 'Okello',
-    email: 'james.okello@ryd.org',
-    role: 'TEAM_LEAD',
-    department: 'Community Outreach',
-    status: 'ACTIVE',
-    joinDate: new Date('2022-08-20'),
-    employeeId: 'RYD-CO-001',
-    phoneNumber: '+256 700 234 567',
-    position: 'Community Liaison Lead'
-  },
-  {
-    id: '3',
-    firstName: 'Grace',
-    lastName: 'Namuli',
-    email: 'grace.namuli@ryd.org',
-    role: 'STAFF',
-    department: 'Youth Programs',
-    status: 'ACTIVE',
-    joinDate: new Date('2023-03-10'),
-    employeeId: 'RYD-YP-001',
-    phoneNumber: '+256 700 345 678',
-    position: 'Youth Coordinator'
-  },
-  {
-    id: '4',
-    firstName: 'Peter',
-    lastName: 'Ssali',
-    email: 'peter.ssali@ryd.org',
-    role: 'VOLUNTEER',
-    department: 'Volunteer Coordination',
-    status: 'ACTIVE',
-    joinDate: new Date('2023-06-01'),
-    employeeId: 'RYD-VC-001',
-    phoneNumber: '+256 700 456 789',
-    position: 'Volunteer Coordinator'
-  },
-  {
-    id: '5',
-    firstName: 'Mary',
-    lastName: 'Achieng',
-    email: 'mary.achieng@ryd.org',
-    role: 'ADMIN',
-    department: 'Human Resources',
-    status: 'ACTIVE',
-    joinDate: new Date('2022-05-15'),
-    employeeId: 'RYD-HR-001',
-    phoneNumber: '+256 700 567 890',
-    position: 'HR Manager'
-  }
-]
+// RYD Organization Details
+const RYD_CONTACT_INFO = {
+  name: "RYD Mental Health",
+  address: "Namugongo, Wakiso, Uganda",
+  poBox: "P.O. Box 187215 Kampala GPO",
+  phone1: "+256 709 039595",
+  phone2: "+256 776 803262",
+  email: "info@rydmentalhealth.org",
+  website: "rydmentalhealth.org"
+}
 
 export function OrganizationIdGenerator() {
   const { data: session } = useSession()
-  const [members] = useState<OrganizationMember[]>(mockMembers)
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
   const [filterRole, setFilterRole] = useState<string>('all')
   const [filterDepartment, setFilterDepartment] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
+  const [loading, setLoading] = useState(true)
 
-  // Filter members based on selected criteria
-  const filteredMembers = members.filter(member => {
+  // Generate RYD ID format: RYD-MMYY-XXX
+  const generateRydId = (joinDate: Date, sequence: number): string => {
+    const month = String(joinDate.getMonth() + 1).padStart(2, '0')
+    const year = String(joinDate.getFullYear()).slice(-2)
+    const seq = String(sequence).padStart(3, '0')
+    return `RYD-${month}${year}-${seq}`
+  }
+
+  // Calculate expiry date (6 months from join date)
+  const calculateExpiryDate = (joinDate: Date): Date => {
+    return addMonths(joinDate, 6)
+  }
+
+  useEffect(() => {
+    fetchEmployees()
+  }, [])
+
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/admin/users?status=ACTIVE&includeProfiles=true')
+      if (response.ok) {
+        const data = await response.json()
+        // Filter only employees (exclude pending users and include only staff/volunteers)
+        const activeEmployees = data.users?.filter((user: any) => 
+          user.status === 'ACTIVE' && 
+          ['STAFF', 'TEAM_LEAD', 'ADMIN', 'HR_OFFICER', 'VOLUNTEER'].includes(user.role)
+        ) || []
+        setEmployees(activeEmployees)
+      } else {
+        toast.error('Failed to fetch employee data')
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error)
+      toast.error('Failed to load employee data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Filter employees based on selected criteria
+  const filteredEmployees = employees.filter(employee => {
     const matchesSearch = searchTerm === '' || 
-      `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.email.toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesRole = filterRole === 'all' || member.role === filterRole
-    const matchesDepartment = filterDepartment === 'all' || member.department === filterDepartment
-    const matchesStatus = filterStatus === 'all' || member.status === filterStatus
+    const matchesRole = filterRole === 'all' || employee.role === filterRole
+    const matchesDepartment = filterDepartment === 'all' || 
+      (employee.department === filterDepartment || employee.employeeProfile?.department === filterDepartment)
+    const matchesStatus = filterStatus === 'all' || employee.status === filterStatus
 
     return matchesSearch && matchesRole && matchesDepartment && matchesStatus
   })
 
   // Get unique values for filters
-  const uniqueRoles = Array.from(new Set(members.map(m => m.role)))
-  const uniqueDepartments = Array.from(new Set(members.map(m => m.department)))
-  const uniqueStatuses = Array.from(new Set(members.map(m => m.status)))
+  const uniqueRoles = Array.from(new Set(employees.map(e => e.role)))
+  const uniqueDepartments = Array.from(new Set(
+    employees.map(e => e.department || e.employeeProfile?.department).filter(Boolean)
+  ))
+  const uniqueStatuses = Array.from(new Set(employees.map(e => e.status)))
 
   const handleSelectAll = () => {
-    if (selectedMembers.length === filteredMembers.length) {
-      setSelectedMembers([])
+    if (selectedEmployees.length === filteredEmployees.length) {
+      setSelectedEmployees([])
     } else {
-      setSelectedMembers(filteredMembers.map(m => m.id))
+      setSelectedEmployees(filteredEmployees.map(e => e.id))
     }
   }
 
-  const handleSelectMember = (memberId: string) => {
-    setSelectedMembers(prev => 
-      prev.includes(memberId) 
-        ? prev.filter(id => id !== memberId)
-        : [...prev, memberId]
+  const handleSelectEmployee = (employeeId: string) => {
+    setSelectedEmployees(prev => 
+      prev.includes(employeeId) 
+        ? prev.filter(id => id !== employeeId)
+        : [...prev, employeeId]
     )
   }
 
   const generateIdCards = async (format: 'pdf' | 'png' | 'csv') => {
-    if (selectedMembers.length === 0) {
-      toast.error('Please select at least one member to generate ID cards')
+    if (selectedEmployees.length === 0) {
+      toast.error('Please select at least one employee to generate ID cards')
       return
     }
 
@@ -164,26 +159,40 @@ export function OrganizationIdGenerator() {
     setGenerationProgress(0)
 
     try {
-      // Simulate ID generation process
-      const selectedMemberData = members.filter(m => selectedMembers.includes(m.id))
+      // Get selected employee data with enhanced information
+      const selectedEmployeeData = employees.filter(e => selectedEmployees.includes(e.id)).map((employee, index) => {
+        const joinDate = employee.employeeProfile?.joinDate ? new Date(employee.employeeProfile.joinDate) : new Date(employee.createdAt)
+        const expiryDate = calculateExpiryDate(joinDate)
+        const rydId = generateRydId(joinDate, index + 1)
+        
+        return {
+          ...employee,
+          rydId,
+          joinDate,
+          expiryDate,
+          department: employee.department || employee.employeeProfile?.department || 'General',
+          position: employee.employeeProfile?.position || employee.role.replace('_', ' ')
+        }
+      })
       
       // Simulate progress
       for (let i = 0; i <= 100; i += 10) {
         setGenerationProgress(i)
-        await new Promise(resolve => setTimeout(resolve, 200))
+        await new Promise(resolve => setTimeout(resolve, 150))
       }
 
       // Generate the actual file content based on format
       if (format === 'csv') {
-        generateCSVDownload(selectedMemberData)
+        generateCSVDownload(selectedEmployeeData)
       } else if (format === 'pdf') {
-        await generatePDFDownload(selectedMemberData)
+        await generateProfessionalPDFDownload(selectedEmployeeData)
       } else if (format === 'png') {
-        await generateImageDownload(selectedMemberData)
+        await generateProfessionalImageDownload(selectedEmployeeData)
       }
 
-      toast.success(`Successfully generated ${format.toUpperCase()} file for ${selectedMembers.length} member(s)`)
+      toast.success(`Successfully generated ${format.toUpperCase()} ID cards for ${selectedEmployees.length} employee(s)`)
     } catch (error) {
+      console.error('ID generation error:', error)
       toast.error('Failed to generate ID cards. Please try again.')
     } finally {
       setIsGenerating(false)
@@ -191,9 +200,9 @@ export function OrganizationIdGenerator() {
     }
   }
 
-  const generateCSVDownload = (memberData: OrganizationMember[]) => {
+  const generateCSVDownload = (employeeData: any[]) => {
     const headers = [
-      'Employee ID',
+      'RYD ID',
       'Full Name',
       'Email',
       'Role',
@@ -201,21 +210,23 @@ export function OrganizationIdGenerator() {
       'Position',
       'Phone Number',
       'Status',
-      'Join Date'
+      'Join Date',
+      'Expiry Date'
     ]
 
     const csvContent = [
       headers.join(','),
-      ...memberData.map(member => [
-        member.employeeId,
-        `"${member.firstName} ${member.lastName}"`,
-        member.email,
-        member.role,
-        `"${member.department}"`,
-        `"${member.position || ''}"`,
-        member.phoneNumber || '',
-        member.status,
-        member.joinDate.toISOString().split('T')[0]
+      ...employeeData.map(employee => [
+        employee.rydId,
+        `"${employee.name}"`,
+        employee.email,
+        employee.role,
+        `"${employee.department}"`,
+        `"${employee.position}"`,
+        employee.phoneNumber || '',
+        employee.status,
+        format(employee.joinDate, 'yyyy-MM-dd'),
+        format(employee.expiryDate, 'yyyy-MM-dd')
       ].join(','))
     ].join('\n')
 
@@ -223,54 +234,197 @@ export function OrganizationIdGenerator() {
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', `ryd-organization-ids-${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `ryd-employee-ids-${format(new Date(), 'yyyy-MM-dd')}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
   }
 
-  const generatePDFDownload = async (memberData: OrganizationMember[]) => {
-    // In a real implementation, you would use a PDF library like jsPDF or PDFKit
-    // For now, we'll create a simple HTML-based PDF simulation
+  const generateProfessionalPDFDownload = async (employeeData: any[]) => {
     const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>RYD Organization ID Cards</title>
+          <title>RYD Mental Health - Official ID Cards</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .id-card { 
-              border: 2px solid #0B874E; 
-              border-radius: 10px; 
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            
+            body { 
+              font-family: 'Inter', Arial, sans-serif; 
+              margin: 0; 
               padding: 20px; 
-              margin: 20px 0; 
-              width: 350px; 
-              background: linear-gradient(135deg, #f0f9f4 0%, #ffffff 100%);
-              page-break-inside: avoid;
+              background: #f8fafc;
             }
-            .header { color: #0B874E; font-weight: bold; font-size: 18px; margin-bottom: 10px; }
-            .employee-id { font-size: 16px; font-weight: bold; color: #333; }
-            .name { font-size: 20px; font-weight: bold; margin: 10px 0; }
-            .details { font-size: 14px; line-height: 1.5; }
-            .logo { text-align: center; margin-bottom: 15px; font-size: 24px; color: #0B874E; }
+            
+            .id-card { 
+              width: 350px;
+              height: 220px;
+              border: 3px solid #0B874E; 
+              border-radius: 15px; 
+              margin: 20px auto; 
+              background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+              box-shadow: 0 10px 25px rgba(11, 135, 78, 0.15);
+              page-break-inside: avoid;
+              position: relative;
+              overflow: hidden;
+            }
+            
+            .id-card::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 60px;
+              background: linear-gradient(135deg, #0B874E 0%, #16A34A 100%);
+            }
+            
+            .header {
+              position: relative;
+              z-index: 2;
+              text-align: center;
+              padding: 12px 20px 0;
+              color: white;
+            }
+            
+            .logo {
+              font-size: 18px;
+              font-weight: 700;
+              margin-bottom: 2px;
+            }
+            
+            .org-name {
+              font-size: 10px;
+              font-weight: 500;
+              opacity: 0.9;
+            }
+            
+            .content {
+              padding: 15px 20px 20px;
+              position: relative;
+              z-index: 2;
+            }
+            
+            .employee-id {
+              font-size: 14px;
+              font-weight: 600;
+              color: #0B874E;
+              text-align: center;
+              margin-bottom: 8px;
+              letter-spacing: 1px;
+            }
+            
+            .name {
+              font-size: 16px;
+              font-weight: 700;
+              text-align: center;
+              margin-bottom: 12px;
+              color: #1f2937;
+            }
+            
+            .details {
+              font-size: 10px;
+              line-height: 1.4;
+              color: #4b5563;
+            }
+            
+            .detail-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 3px;
+            }
+            
+            .label {
+              font-weight: 600;
+              color: #374151;
+            }
+            
+            .footer {
+              position: absolute;
+              bottom: 8px;
+              left: 20px;
+              right: 20px;
+              font-size: 8px;
+              color: #6b7280;
+              text-align: center;
+              border-top: 1px solid #e5e7eb;
+              padding-top: 5px;
+            }
+            
+            .contact-info {
+              font-size: 7px;
+              line-height: 1.2;
+            }
+            
+            .expiry {
+              position: absolute;
+              top: 65px;
+              right: 15px;
+              background: #fef3c7;
+              color: #92400e;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-size: 8px;
+              font-weight: 600;
+            }
+            
+            @media print {
+              body { background: white; }
+              .id-card { 
+                box-shadow: none; 
+                margin: 10px auto;
+              }
+            }
           </style>
         </head>
         <body>
-          ${memberData.map(member => `
+          ${employeeData.map(employee => `
             <div class="id-card">
-              <div class="logo">🏥 RYD</div>
-              <div class="header">ORGANIZATION ID CARD</div>
-              <div class="employee-id">ID: ${member.employeeId}</div>
-              <div class="name">${member.firstName} ${member.lastName}</div>
-              <div class="details">
-                <div><strong>Role:</strong> ${member.role}</div>
-                <div><strong>Department:</strong> ${member.department}</div>
-                <div><strong>Position:</strong> ${member.position || 'N/A'}</div>
-                <div><strong>Email:</strong> ${member.email}</div>
-                <div><strong>Phone:</strong> ${member.phoneNumber || 'N/A'}</div>
-                <div><strong>Join Date:</strong> ${member.joinDate.toLocaleDateString()}</div>
-                <div><strong>Status:</strong> ${member.status}</div>
+              <div class="header">
+                <div class="logo">🏥 RYD MENTAL HEALTH</div>
+                <div class="org-name">OFFICIAL EMPLOYEE ID</div>
+              </div>
+              
+              <div class="expiry">
+                EXP: ${format(employee.expiryDate, 'MM/yy')}
+              </div>
+              
+              <div class="content">
+                <div class="employee-id">${employee.rydId}</div>
+                <div class="name">${employee.name.toUpperCase()}</div>
+                
+                <div class="details">
+                  <div class="detail-row">
+                    <span class="label">Position:</span>
+                    <span>${employee.position}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">Department:</span>
+                    <span>${employee.department}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">Role:</span>
+                    <span>${employee.role.replace('_', ' ')}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">Join Date:</span>
+                    <span>${format(employee.joinDate, 'MMM dd, yyyy')}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="label">Email:</span>
+                    <span>${employee.email}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="footer">
+                <div class="contact-info">
+                  <strong>If found, please return to:</strong><br>
+                  ${RYD_CONTACT_INFO.address} • ${RYD_CONTACT_INFO.poBox}<br>
+                  ${RYD_CONTACT_INFO.phone1} • ${RYD_CONTACT_INFO.phone2}<br>
+                  ${RYD_CONTACT_INFO.email} • ${RYD_CONTACT_INFO.website}
+                </div>
               </div>
             </div>
           `).join('')}
@@ -282,36 +436,49 @@ export function OrganizationIdGenerator() {
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', `ryd-id-cards-${new Date().toISOString().split('T')[0]}.html`)
+    link.setAttribute('download', `ryd-professional-id-cards-${format(new Date(), 'yyyy-MM-dd')}.html`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
   }
 
-  const generateImageDownload = async (memberData: OrganizationMember[]) => {
-    // In a real implementation, you would use Canvas API or a library like html2canvas
-    // For now, we'll create a simple text file with ID card data
-    const textContent = memberData.map(member => `
-RYD ORGANIZATION ID CARD
-========================
-ID: ${member.employeeId}
-Name: ${member.firstName} ${member.lastName}
-Role: ${member.role}
-Department: ${member.department}
-Position: ${member.position || 'N/A'}
-Email: ${member.email}
-Phone: ${member.phoneNumber || 'N/A'}
-Join Date: ${member.joinDate.toLocaleDateString()}
-Status: ${member.status}
-========================
+  const generateProfessionalImageDownload = async (employeeData: any[]) => {
+    // Generate professional ID card data for image format
+    const idCardData = employeeData.map(employee => `
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                           🏥 RYD MENTAL HEALTH                                ║
+║                          OFFICIAL EMPLOYEE ID CARD                           ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  ID: ${employee.rydId.padEnd(20)} │ EXPIRES: ${format(employee.expiryDate, 'MM/yyyy').padEnd(15)} ║
+║                                                                               ║
+║  NAME: ${employee.name.toUpperCase().padEnd(50)}                         ║
+║                                                                               ║
+║  POSITION: ${employee.position.padEnd(30)} │ DEPT: ${employee.department.padEnd(20)} ║
+║  ROLE: ${employee.role.replace('_', ' ').padEnd(33)} │ STATUS: ${employee.status.padEnd(17)} ║
+║                                                                               ║
+║  EMAIL: ${employee.email.padEnd(50)}                        ║
+║  JOINED: ${format(employee.joinDate, 'MMM dd, yyyy').padEnd(49)}                       ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                          🔍 IF FOUND, PLEASE RETURN TO:                      ║
+║                                                                               ║
+║  📍 ${RYD_CONTACT_INFO.address.padEnd(60)}               ║
+║  📮 ${RYD_CONTACT_INFO.poBox.padEnd(60)}               ║
+║  📞 ${RYD_CONTACT_INFO.phone1} / ${RYD_CONTACT_INFO.phone2.padEnd(40)}        ║
+║  📧 ${RYD_CONTACT_INFO.email.padEnd(60)}               ║
+║  🌐 ${RYD_CONTACT_INFO.website.padEnd(60)}               ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
     `).join('\n\n')
 
-    const blob = new Blob([textContent], { type: 'text/plain' })
+    const blob = new Blob([idCardData], { type: 'text/plain;charset=utf-8' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', `ryd-id-cards-${new Date().toISOString().split('T')[0]}.txt`)
+    link.setAttribute('download', `ryd-professional-id-cards-${format(new Date(), 'yyyy-MM-dd')}.txt`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
@@ -327,7 +494,7 @@ Status: ${member.status}
           <p className="text-muted-foreground">Generate and download organization ID cards for team members</p>
         </div>
         <Badge variant="secondary" className="w-fit">
-          {filteredMembers.length} member(s) • {selectedMembers.length} selected
+          {filteredEmployees.length} employee(s) • {selectedEmployees.length} selected
         </Badge>
       </div>
 
@@ -338,7 +505,7 @@ Status: ${member.status}
             <Filter className="h-5 w-5" />
             Filter & Search
           </CardTitle>
-          <CardDescription>Filter members by role, department, or search by name/email</CardDescription>
+          <CardDescription>Filter employees by role, department, or search by name/email</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -418,42 +585,64 @@ Status: ${member.status}
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Select Members
+                Select Employees
               </CardTitle>
-              <CardDescription>Choose which members to include in the ID generation</CardDescription>
+              <CardDescription>Choose which employees to include in the professional ID generation</CardDescription>
             </div>
             <Button variant="outline" onClick={handleSelectAll}>
-              {selectedMembers.length === filteredMembers.length ? 'Deselect All' : 'Select All'}
+              {selectedEmployees.length === filteredEmployees.length ? 'Deselect All' : 'Select All'}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {filteredMembers.map((member) => (
-              <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                <Checkbox
-                  id={member.id}
-                  checked={selectedMembers.includes(member.id)}
-                  onCheckedChange={() => handleSelectMember(member.id)}
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{member.firstName} {member.lastName}</span>
-                    <Badge variant="secondary" className="text-xs">{member.role}</Badge>
-                    <Badge 
-                      variant={member.status === 'ACTIVE' ? 'default' : 'secondary'} 
-                      className={`text-xs ${member.status === 'ACTIVE' ? 'bg-green-600' : ''}`}
-                    >
-                      {member.status}
-                    </Badge>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {member.employeeId} • {member.department} • {member.email}
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span>Loading employees...</span>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {filteredEmployees.map((employee) => (
+                <div key={employee.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                  <Checkbox
+                    id={employee.id}
+                    checked={selectedEmployees.includes(employee.id)}
+                    onCheckedChange={() => handleSelectEmployee(employee.id)}
+                  />
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={employee.avatar} />
+                    <AvatarFallback className="bg-[#0B874E] text-white">
+                      {employee.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium">{employee.name}</span>
+                      <Badge variant="secondary" className="text-xs">{employee.role.replace('_', ' ')}</Badge>
+                      <Badge 
+                        variant={employee.status === 'ACTIVE' ? 'default' : 'secondary'} 
+                        className={`text-xs ${employee.status === 'ACTIVE' ? 'bg-green-600' : ''}`}
+                      >
+                        {employee.status}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {employee.department || employee.employeeProfile?.department || 'General'} • {employee.email}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {employee.employeeProfile?.position || employee.role.replace('_', ' ')} • Joined {format(new Date(employee.employeeProfile?.joinDate || employee.createdAt), 'MMM yyyy')}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+              {filteredEmployees.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No employees found matching your criteria</p>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -469,7 +658,7 @@ Status: ${member.status}
           <CardContent>
             <Progress value={generationProgress} className="w-full" />
             <p className="text-sm text-muted-foreground mt-2">
-              Processing {selectedMembers.length} member(s)... {generationProgress}%
+              Processing {selectedEmployees.length} employee(s)... {generationProgress}%
             </p>
           </CardContent>
         </Card>
@@ -482,48 +671,64 @@ Status: ${member.status}
             <Download className="h-5 w-5" />
             Download Options
           </CardTitle>
-          <CardDescription>Choose your preferred format for the organization ID cards</CardDescription>
+          <CardDescription>Choose your preferred format for the professional RYD ID cards</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <Button
               onClick={() => generateIdCards('pdf')}
-              disabled={selectedMembers.length === 0 || isGenerating}
-              className="h-auto p-6 flex flex-col gap-2"
-              variant="outline"
+              disabled={selectedEmployees.length === 0 || isGenerating}
+              className="h-auto p-6 flex flex-col gap-2 bg-[#0B874E] hover:bg-[#0B874E]/90 text-white"
             >
-              <FileText className="h-8 w-8" />
-              <span className="font-medium">PDF Format</span>
-              <span className="text-xs text-muted-foreground">Printable ID cards</span>
+              <CreditCard className="h-8 w-8" />
+              <span className="font-medium">Professional PDF</span>
+              <span className="text-xs opacity-90">RYD-MMYY-*** format with logo</span>
             </Button>
             
             <Button
               onClick={() => generateIdCards('png')}
-              disabled={selectedMembers.length === 0 || isGenerating}
+              disabled={selectedEmployees.length === 0 || isGenerating}
               className="h-auto p-6 flex flex-col gap-2"
               variant="outline"
             >
               <Building2 className="h-8 w-8" />
-              <span className="font-medium">Image Format</span>
-              <span className="text-xs text-muted-foreground">Digital ID cards</span>
+              <span className="font-medium">Text Format</span>
+              <span className="text-xs text-muted-foreground">ASCII ID cards with contact info</span>
             </Button>
             
             <Button
               onClick={() => generateIdCards('csv')}
-              disabled={selectedMembers.length === 0 || isGenerating}
+              disabled={selectedEmployees.length === 0 || isGenerating}
               className="h-auto p-6 flex flex-col gap-2"
               variant="outline"
             >
               <FileText className="h-8 w-8" />
-              <span className="font-medium">CSV Format</span>
-              <span className="text-xs text-muted-foreground">Data export</span>
+              <span className="font-medium">CSV Export</span>
+              <span className="text-xs text-muted-foreground">Employee data with RYD IDs</span>
             </Button>
           </div>
           
-          {selectedMembers.length === 0 && (
+          {selectedEmployees.length === 0 && !loading && (
             <div className="flex items-center gap-2 mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <AlertCircle className="h-4 w-4 text-yellow-600" />
-              <span className="text-sm text-yellow-800">Please select at least one member to enable downloads</span>
+              <span className="text-sm text-yellow-800">Please select at least one employee to enable ID generation</span>
+            </div>
+          )}
+          
+          {selectedEmployees.length > 0 && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-green-800">Ready to Generate Professional IDs</span>
+              </div>
+              <div className="text-xs text-green-700">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <span>📋 Format: RYD-MMYY-XXX</span>
+                  <span>📅 6-month validity</span>
+                  <span>🏥 Official RYD logo</span>
+                  <span>📞 Contact information</span>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
