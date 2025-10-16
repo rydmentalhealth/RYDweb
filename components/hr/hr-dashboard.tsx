@@ -27,10 +27,21 @@ interface HRStats {
   activeEmployees: number
   newHires: number
   pendingApprovals: number
+  totalSystemUsers: number
+  activeSystemUsers: number
+  pendingSystemUsers: number
   upcomingReviews: number
   openPositions: number
   trainingCompleted: number
   performanceReviews: number
+  pendingLeaveRequests: number
+  approvedLeaveRequests: number
+  departmentBreakdown: Array<{ department: string; count: number }>
+  employmentTypeBreakdown: Array<{ type: string; count: number }>
+  recentActivity: {
+    newEmployees: number
+    newSystemUsers: number
+  }
 }
 
 export function HRDashboard() {
@@ -39,10 +50,21 @@ export function HRDashboard() {
     activeEmployees: 0,
     newHires: 0,
     pendingApprovals: 0,
+    totalSystemUsers: 0,
+    activeSystemUsers: 0,
+    pendingSystemUsers: 0,
     upcomingReviews: 0,
     openPositions: 0,
     trainingCompleted: 0,
-    performanceReviews: 0
+    performanceReviews: 0,
+    pendingLeaveRequests: 0,
+    approvedLeaveRequests: 0,
+    departmentBreakdown: [],
+    employmentTypeBreakdown: [],
+    recentActivity: {
+      newEmployees: 0,
+      newSystemUsers: 0
+    }
   })
   const [loading, setLoading] = useState(true)
 
@@ -52,19 +74,36 @@ export function HRDashboard() {
 
   const fetchHRStats = async () => {
     try {
-      // Mock data for now - replace with actual API call
-      setStats({
-        totalEmployees: 45,
-        activeEmployees: 42,
-        newHires: 3,
-        pendingApprovals: 8,
-        upcomingReviews: 12,
-        openPositions: 5,
-        trainingCompleted: 28,
-        performanceReviews: 15
-      })
+      const response = await fetch('/api/hr/stats')
+      if (!response.ok) {
+        throw new Error('Failed to fetch HR stats')
+      }
+      const data = await response.json()
+      setStats(data)
     } catch (error) {
       console.error('Error fetching HR stats:', error)
+      // Fallback to mock data if API fails
+      setStats({
+        totalEmployees: 0,
+        activeEmployees: 0,
+        newHires: 0,
+        pendingApprovals: 0,
+        totalSystemUsers: 0,
+        activeSystemUsers: 0,
+        pendingSystemUsers: 0,
+        upcomingReviews: 0,
+        openPositions: 0,
+        trainingCompleted: 0,
+        performanceReviews: 0,
+        pendingLeaveRequests: 0,
+        approvedLeaveRequests: 0,
+        departmentBreakdown: [],
+        employmentTypeBreakdown: [],
+        recentActivity: {
+          newEmployees: 0,
+          newSystemUsers: 0
+        }
+      })
     } finally {
       setLoading(false)
     }
@@ -81,7 +120,7 @@ export function HRDashboard() {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
@@ -90,7 +129,7 @@ export function HRDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalEmployees}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.activeEmployees} active
+              {stats.activeEmployees} active employees
             </p>
           </CardContent>
         </Card>
@@ -102,7 +141,7 @@ export function HRDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.newHires}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <p className="text-xs text-muted-foreground">Added to employee directory this month</p>
           </CardContent>
         </Card>
 
@@ -113,7 +152,20 @@ export function HRDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingApprovals}</div>
-            <p className="text-xs text-muted-foreground">Awaiting review</p>
+            <p className="text-xs text-muted-foreground">Active users not yet added as employees</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">System Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activeSystemUsers}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.pendingSystemUsers} pending approval
+            </p>
           </CardContent>
         </Card>
 
@@ -138,7 +190,7 @@ export function HRDashboard() {
               <CardTitle className="text-orange-800">Action Required</CardTitle>
             </div>
             <CardDescription className="text-orange-700">
-              {stats.pendingApprovals} employee approvals pending review
+              {stats.pendingApprovals} active system users need to be added to employee directory
             </CardDescription>
           </CardHeader>
         </Card>
