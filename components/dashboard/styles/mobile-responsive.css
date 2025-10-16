@@ -1,0 +1,213 @@
+/* Mobile-first responsive styles for RYD Dashboard */
+
+/* Base mobile styles */
+@media (max-width: 640px) {
+  /* Dashboard layout adjustments */
+  .dashboard-container {
+    padding: 1rem;
+  }
+  
+  /* Card grid responsive */
+  .kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Typography scaling */
+  .dashboard-title {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  
+  .dashboard-subtitle {
+    font-size: 0.875rem;
+  }
+  
+  /* Button adjustments */
+  .dashboard-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .dashboard-actions button {
+    width: 100%;
+  }
+  
+  /* Card content */
+  .dashboard-card {
+    padding: 1rem;
+  }
+  
+  .dashboard-card-header {
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Chart containers */
+  .chart-container {
+    height: 250px;
+  }
+  
+  /* Task lists */
+  .task-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .task-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  /* Notification center */
+  .notification-dropdown {
+    width: calc(100vw - 2rem);
+    max-width: 320px;
+  }
+  
+  /* ID Generator */
+  .id-generator-filters {
+    grid-template-columns: 1fr;
+  }
+  
+  .id-generator-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-actions {
+    flex-direction: row;
+  }
+  
+  .chart-container {
+    height: 300px;
+  }
+  
+  .id-generator-filters {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .id-generator-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 1025px) {
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .chart-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .chart-container {
+    height: 350px;
+  }
+  
+  .id-generator-filters {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .id-generator-actions {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Large desktop styles */
+@media (min-width: 1440px) {
+  .kpi-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .chart-container {
+    height: 400px;
+  }
+}
+
+/* Touch-friendly adjustments */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  button, .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve spacing for touch */
+  .dashboard-actions {
+    gap: 1rem;
+  }
+  
+  /* Better checkbox/radio sizing */
+  input[type="checkbox"], 
+  input[type="radio"] {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dashboard-card {
+    border-width: 2px;
+  }
+  
+  .kpi-card {
+    border-left-width: 6px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .dashboard-actions,
+  .notification-center,
+  .sidebar {
+    display: none !important;
+  }
+  
+  .dashboard-card {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+  
+  .chart-container {
+    height: auto;
+    min-height: 300px;
+  }
+}
+
+/* Dark mode adjustments (if implemented) */
+@media (prefers-color-scheme: dark) {
+  .dashboard-card {
+    background-color: hsl(var(--card));
+    border-color: hsl(var(--border));
+  }
+  
+  .chart-container {
+    filter: brightness(0.9);
+  }
+}
