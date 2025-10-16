@@ -35,39 +35,39 @@ model Session {
 
 // Unified User model that combines authentication and profile data
 model User {
-  id                 String          @id @default(cuid())
+  id            String     @id @default(cuid())
   // Authentication fields
-  email              String          @unique
-  emailVerified      DateTime?
-  password           String?
-  role               UserRole        @default(VOLUNTEER)
-  status             UserStatus      @default(PENDING)
-  
+  email         String     @unique
+  emailVerified DateTime?
+  password      String?
+  role          UserRole   @default(VOLUNTEER)
+  status        UserStatus @default(PENDING)
+
   // Profile fields (previously in TeamMember)
-  firstName          String?
-  lastName           String?
-  name               String? // Computed from firstName + lastName
-  avatar             String?
-  bio                String?
-  jobTitle           String?
-  department         String?
-  phone              String?
-  nationalId         String?
-  startDate          DateTime?
-  endDate            DateTime?
-  location           String?
-  district           String?
-  region             String?
-  languages          String?
-  skills             String?
-  emergencyContact   String?
-  availability       Availability?
-  weeklyHours        Int?            @default(40)
-  
+  firstName        String?
+  lastName         String?
+  name             String? // Computed from firstName + lastName
+  avatar           String?
+  bio              String?
+  jobTitle         String?
+  department       String?
+  phone            String?
+  nationalId       String?
+  startDate        DateTime?
+  endDate          DateTime?
+  location         String?
+  district         String?
+  region           String?
+  languages        String?
+  skills           String?
+  emergencyContact String?
+  availability     Availability?
+  weeklyHours      Int?          @default(40)
+
   // Authentication relations
-  accounts           Account[]
-  sessions           Session[]
-  
+  accounts Account[]
+  sessions Session[]
+
   // Application relations
   timeEntries        TimeEntry[]
   tasks              TaskAssignee[]
@@ -78,32 +78,32 @@ model User {
   comments           TaskComment[]
   tasksCreated       Task[]          @relation("TaskCreator")
   checkIns           CheckIn[]
-  teams              UserTeam[]      // New: User team memberships
-  
+  teams              UserTeam[] // New: User team memberships
+
   // Finance relations
-  stipends           Stipend[]
-  stipendsApproved   Stipend[]       @relation("StipendApproval")
-  expenseRequests    ExpenseRequest[] @relation("ExpenseRequester")
-  expenseTeamLead    ExpenseRequest[] @relation("ExpenseTeamLead")
-  expenseFinanceApproval ExpenseRequest[] @relation("ExpenseFinanceApproval")
-  expenseDirectorApproval ExpenseRequest[] @relation("ExpenseDirectorApproval")
-  expenseAttachments ExpenseAttachment[]
-  expenseComments    ExpenseComment[]
-  budgetsCreated     DepartmentBudget[] @relation("BudgetCreator")
-  budgetsModified    DepartmentBudget[] @relation("BudgetModifier")
-  budgetAdjustments  BudgetAdjustment[]
-  reportsGenerated   FinancialReport[]
+  stipends                Stipend[]
+  stipendsApproved        Stipend[]               @relation("StipendApproval")
+  expenseRequests         ExpenseRequest[]        @relation("ExpenseRequester")
+  expenseTeamLead         ExpenseRequest[]        @relation("ExpenseTeamLead")
+  expenseFinanceApproval  ExpenseRequest[]        @relation("ExpenseFinanceApproval")
+  expenseDirectorApproval ExpenseRequest[]        @relation("ExpenseDirectorApproval")
+  expenseAttachments      ExpenseAttachment[]
+  expenseComments         ExpenseComment[]
+  budgetsCreated          DepartmentBudget[]      @relation("BudgetCreator")
+  budgetsModified         DepartmentBudget[]      @relation("BudgetModifier")
+  budgetAdjustments       BudgetAdjustment[]
+  reportsGenerated        FinancialReport[]
   // Project Management relations
-  milestoneResponsible ProjectMilestone[] @relation("MilestoneResponsible")
-  progressUpdates    ProjectProgressUpdate[] @relation("ProgressUpdateUser")
-  progressApprovals  ProjectProgressUpdate[] @relation("ProgressApprover")
-  projectActivities  ProjectActivityLog[] @relation("ProjectActivityUser")
-  projectResources   ProjectResource[] @relation("ProjectResourceUser")
-  milestoneAttachments MilestoneAttachment[]
-  
+  milestoneResponsible    ProjectMilestone[]      @relation("MilestoneResponsible")
+  progressUpdates         ProjectProgressUpdate[] @relation("ProgressUpdateUser")
+  progressApprovals       ProjectProgressUpdate[] @relation("ProgressApprover")
+  projectActivities       ProjectActivityLog[]    @relation("ProjectActivityUser")
+  projectResources        ProjectResource[]       @relation("ProjectResourceUser")
+  milestoneAttachments    MilestoneAttachment[]
+
   // Employee Management relations
   employeeProfile    EmployeeProfile?
-  createdEmployees   EmployeeProfile[] @relation("EmployeeCreatedBy")
+  createdEmployees   EmployeeProfile[]   @relation("EmployeeCreatedBy")
   uploadedDocuments  EmployeeDocument[]
   performanceReviews PerformanceReview[]
   approvedLeaves     LeaveRequest[]
@@ -111,14 +111,25 @@ model User {
   timelineEvents     TimelineEvent[]
   welcomeNotes       WelcomeNote[]
   activityLogs       ActivityLog[]
-  
+
+  // Enhanced Attendance & Work Tracking relations
+  dailyTaskLogs    DailyTaskLog[]
+  approvedTaskLogs DailyTaskLog[] @relation("TaskLogApprover")
+  workSummaries    WorkSummary[]
+
+  // Enhanced Performance & Evaluation relations
+  kpisCreated     KPI[]        @relation("KPICreator")
+  reviews360Given Review360[]  @relation("Review360Reviewer")
+  rewards         UserReward[]
+  rewardsGranted  UserReward[] @relation("RewardGranter")
+
   // Audit fields
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  approvedAt         DateTime?
-  approvedById       String?
-  approvedBy         User?           @relation("UserApproval", fields: [approvedById], references: [id])
-  approvedUsers      User[]          @relation("UserApproval")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  approvedAt    DateTime?
+  approvedById  String?
+  approvedBy    User?     @relation("UserApproval", fields: [approvedById], references: [id])
+  approvedUsers User[]    @relation("UserApproval")
 }
 
 model VerificationToken {
@@ -142,11 +153,11 @@ enum UserRole {
 }
 
 enum UserStatus {
-  PENDING      // Awaiting admin approval
-  ACTIVE       // Approved and active
-  INACTIVE     // Temporarily deactivated
-  SUSPENDED    // Suspended by admin
-  REJECTED     // Application rejected
+  PENDING // Awaiting admin approval
+  ACTIVE // Approved and active
+  INACTIVE // Temporarily deactivated
+  SUSPENDED // Suspended by admin
+  REJECTED // Application rejected
 }
 
 enum Availability {
@@ -176,8 +187,8 @@ model Task {
   comments    TaskComment[]
   timeEntries TimeEntry[]
   completedAt DateTime?
-  assignees   TaskAssignee[]   // Individual user assignments
-  teams       TaskTeam[]       // Team assignments
+  assignees   TaskAssignee[] // Individual user assignments
+  teams       TaskTeam[] // Team assignments
 }
 
 enum TaskPriority {
@@ -236,35 +247,35 @@ model TimeEntry {
 
 // Project model
 model Project {
-  id           String                 @id @default(cuid())
-  name         String                 @db.VarChar(100)
-  description  String?
-  status       ProjectStatus          @default(PLANNING)
-  priority     ProjectPriority        @default(MEDIUM)
-  startDate    DateTime?
-  endDate      DateTime?
-  budget       Float?
-  clientId     String?
-  client       Client?                @relation(fields: [clientId], references: [id])
-  ownerId      String
-  owner        User                   @relation("ProjectOwner", fields: [ownerId], references: [id])
-  colorTag     String?
-  department   String?                // Department dropdown: Outreach, Therapy, IT, Media, Research, etc.
-  projectLeadId String?               // Project Lead from existing employee list
-  projectLead  User?                  @relation("ProjectLead", fields: [projectLeadId], references: [id])
-  googleDriveFolderId String?         // Google Drive folder integration
-  notionPageId String?                // Notion page integration
-  team         ProjectMember[]
-  tasks        Task[]
-  documents    Document[]
-  transactions FinancialTransaction[]
-  expenses     ExpenseRequest[]
-  milestones   ProjectMilestone[]     // Project milestones
-  progressUpdates ProjectProgressUpdate[] // Daily progress updates
-  activityLogs ProjectActivityLog[]   // Project activity logging
-  resources    ProjectResource[]      // Project resources and attachments
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
+  id                  String                  @id @default(cuid())
+  name                String                  @db.VarChar(100)
+  description         String?
+  status              ProjectStatus           @default(PLANNING)
+  priority            ProjectPriority         @default(MEDIUM)
+  startDate           DateTime?
+  endDate             DateTime?
+  budget              Float?
+  clientId            String?
+  client              Client?                 @relation(fields: [clientId], references: [id])
+  ownerId             String
+  owner               User                    @relation("ProjectOwner", fields: [ownerId], references: [id])
+  colorTag            String?
+  department          String? // Department dropdown: Outreach, Therapy, IT, Media, Research, etc.
+  projectLeadId       String? // Project Lead from existing employee list
+  projectLead         User?                   @relation("ProjectLead", fields: [projectLeadId], references: [id])
+  googleDriveFolderId String? // Google Drive folder integration
+  notionPageId        String? // Notion page integration
+  team                ProjectMember[]
+  tasks               Task[]
+  documents           Document[]
+  transactions        FinancialTransaction[]
+  expenses            ExpenseRequest[]
+  milestones          ProjectMilestone[] // Project milestones
+  progressUpdates     ProjectProgressUpdate[] // Daily progress updates
+  activityLogs        ProjectActivityLog[] // Project activity logging
+  resources           ProjectResource[] // Project resources and attachments
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
 }
 
 enum ProjectStatus {
@@ -303,20 +314,20 @@ enum ProjectRole {
 
 // Project Milestone model
 model ProjectMilestone {
-  id          String        @id @default(cuid())
-  projectId   String
-  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  dueDate     DateTime
-  progress    Int           @default(0) // Progress percentage 0-100
-  status      MilestoneStatus @default(PLANNED)
+  id                String                @id @default(cuid())
+  projectId         String
+  project           Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?
+  dueDate           DateTime
+  progress          Int                   @default(0) // Progress percentage 0-100
+  status            MilestoneStatus       @default(PLANNED)
   responsibleUserId String?
-  responsibleUser User?      @relation("MilestoneResponsible", fields: [responsibleUserId], references: [id])
-  attachments MilestoneAttachment[]
-  subTasks    MilestoneSubTask[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  responsibleUser   User?                 @relation("MilestoneResponsible", fields: [responsibleUserId], references: [id])
+  attachments       MilestoneAttachment[]
+  subTasks          MilestoneSubTask[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 }
 
 enum MilestoneStatus {
@@ -329,89 +340,142 @@ enum MilestoneStatus {
 
 // Milestone Sub-tasks
 model MilestoneSubTask {
-  id          String        @id @default(cuid())
+  id          String           @id @default(cuid())
   milestoneId String
   milestone   ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
   title       String
   description String?
-  isCompleted Boolean       @default(false)
+  isCompleted Boolean          @default(false)
   completedAt DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 // Milestone Attachments
 model MilestoneAttachment {
-  id          String        @id @default(cuid())
-  milestoneId String
-  milestone   ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
-  fileName    String
-  fileUrl     String
-  fileType    String
-  fileSize    Int?
+  id           String           @id @default(cuid())
+  milestoneId  String
+  milestone    ProjectMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileUrl      String
+  fileType     String
+  fileSize     Int?
   uploadedById String
-  uploadedBy  User          @relation(fields: [uploadedById], references: [id])
-  createdAt   DateTime      @default(now())
+  uploadedBy   User             @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime         @default(now())
 }
 
 // Daily Progress Updates
 model ProjectProgressUpdate {
-  id          String        @id @default(cuid())
-  projectId   String
-  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User          @relation("ProgressUpdateUser", fields: [userId], references: [id])
-  taskActivity String       // Task/Activity completed
-  progressPercentage Int    // Percentage progress
-  challenges  String?       // Challenges encountered
-  nextPlan    String?       // Next day's plan
-  attachment  String?       // Attachment URL
-  isApproved  Boolean       @default(false)
-  approvedById String?
-  approvedBy  User?         @relation("ProgressApprover", fields: [approvedById], references: [id])
-  approvedAt  DateTime?
-  comments    String?       // Project Lead comments
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id                 String    @id @default(cuid())
+  projectId          String
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User      @relation("ProgressUpdateUser", fields: [userId], references: [id])
+  taskActivity       String // Task/Activity completed
+  progressPercentage Int // Percentage progress
+  challenges         String? // Challenges encountered
+  nextPlan           String? // Next day's plan
+  attachment         String? // Attachment URL
+  isApproved         Boolean   @default(false)
+  approvedById       String?
+  approvedBy         User?     @relation("ProgressApprover", fields: [approvedById], references: [id])
+  approvedAt         DateTime?
+  comments           String? // Project Lead comments
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 // Project Activity Log
 model ProjectActivityLog {
-  id          String        @id @default(cuid())
-  projectId   String
-  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User          @relation("ProjectActivityUser", fields: [userId], references: [id])
-  action      String        // CREATE, UPDATE, DELETE, ASSIGN, etc.
-  details     Json?         // Additional action details
-  createdAt   DateTime      @default(now())
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation("ProjectActivityUser", fields: [userId], references: [id])
+  action    String // CREATE, UPDATE, DELETE, ASSIGN, etc.
+  details   Json? // Additional action details
+  createdAt DateTime @default(now())
 }
 
 // Project Resources
 model ProjectResource {
-  id          String        @id @default(cuid())
-  projectId   String
-  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  fileName    String
-  fileUrl     String
-  fileType    String
-  fileSize    Int?
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileUrl      String
+  fileType     String
+  fileSize     Int?
   uploadedById String
-  uploadedBy  User          @relation("ProjectResourceUser", fields: [uploadedById], references: [id])
-  createdAt   DateTime      @default(now())
+  uploadedBy   User     @relation("ProjectResourceUser", fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
 }
 
-// Attendance model
+// Enhanced Attendance & Work Tracking
 model CheckIn {
-  id           String   @id @default(cuid())
+  id           String        @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  checkInTime  DateTime @default(now())
+  user         User          @relation(fields: [userId], references: [id])
+  checkInTime  DateTime      @default(now())
   checkOutTime DateTime?
   notes        String?
   location     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  latitude     Float? // Geolocation support
+  longitude    Float? // Geolocation support
+  ipAddress    String?
+  deviceInfo   String?
+  workingHours Float? // Auto-calculated working hours
+  status       CheckInStatus @default(CHECKED_IN)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([userId, checkInTime])
+}
+
+enum CheckInStatus {
+  CHECKED_IN
+  CHECKED_OUT
+  INCOMPLETE
+}
+
+// Daily task logs for attendance tracking
+model DailyTaskLog {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  date         DateTime
+  description  String // What they worked on
+  hoursSpent   Float?
+  category     String? // Optional categorization
+  attachments  String? // JSON array of attachment URLs
+  isApproved   Boolean   @default(false)
+  approvedById String?
+  approvedBy   User?     @relation("TaskLogApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId, date])
+}
+
+// Monthly work summaries
+model WorkSummary {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  month          String // Format: YYYY-MM
+  totalDays      Int      @default(0)
+  daysPresent    Int      @default(0)
+  daysAbsent     Int      @default(0)
+  totalHours     Float    @default(0)
+  tasksCompleted Int      @default(0)
+  attendanceRate Float    @default(0) // Percentage
+  summaryData    Json? // Additional stats
+  generatedAt    DateTime @default(now())
+
+  @@unique([userId, month])
+  @@index([userId, month])
 }
 
 // Task assignees junction table
@@ -439,25 +503,25 @@ model DocumentCategory {
 
 // Document model
 model Document {
-  id           String            @id @default(cuid())
-  title        String
-  description  String?
-  fileName     String
-  fileUrl      String
-  fileType     String
-  fileSize     Int?
-  category     String?
-  categoryId   String?
+  id               String            @id @default(cuid())
+  title            String
+  description      String?
+  fileName         String
+  fileUrl          String
+  fileType         String
+  fileSize         Int?
+  category         String?
+  categoryId       String?
   documentCategory DocumentCategory? @relation(fields: [categoryId], references: [id])
-  uploadedById String
-  uploadedBy   User              @relation(fields: [uploadedById], references: [id])
-  projectId    String?
-  project      Project?          @relation(fields: [projectId], references: [id])
-  accessLevel  DocumentAccess    @default(ALL_STAFF)
-  isPublic     Boolean           @default(false)
-  tags         String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  uploadedById     String
+  uploadedBy       User              @relation(fields: [uploadedById], references: [id])
+  projectId        String?
+  project          Project?          @relation(fields: [projectId], references: [id])
+  accessLevel      DocumentAccess    @default(ALL_STAFF)
+  isPublic         Boolean           @default(false)
+  tags             String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 enum DocumentAccess {
@@ -492,20 +556,20 @@ enum TransactionType {
 
 // Stipend model for employee/volunteer payments
 model Stipend {
-  id            String        @id @default(cuid())
+  id            String         @id @default(cuid())
   employeeId    String
-  employee      User          @relation(fields: [employeeId], references: [id])
+  employee      User           @relation(fields: [employeeId], references: [id])
   amount        Float
   type          StipendType
-  status        PaymentStatus @default(PENDING)
+  status        PaymentStatus  @default(PENDING)
   paymentDate   DateTime?
   paymentMethod PaymentMethod?
   remarks       String?
   department    String?
   approvedById  String?
-  approvedBy    User?         @relation("StipendApproval", fields: [approvedById], references: [id])
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  approvedBy    User?          @relation("StipendApproval", fields: [approvedById], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 enum StipendType {
@@ -534,48 +598,48 @@ enum PaymentMethod {
 
 // Expense request model
 model ExpenseRequest {
-  id            String           @id @default(cuid())
-  requesterId   String
-  requester     User             @relation("ExpenseRequester", fields: [requesterId], references: [id])
-  purpose       String
-  category      ExpenseCategory
-  amount        Float
-  description   String?
-  status        ExpenseStatus    @default(PENDING)
-  department    String?
-  projectId     String?
-  project       Project?         @relation(fields: [projectId], references: [id])
-  
+  id          String          @id @default(cuid())
+  requesterId String
+  requester   User            @relation("ExpenseRequester", fields: [requesterId], references: [id])
+  purpose     String
+  category    ExpenseCategory
+  amount      Float
+  description String?
+  status      ExpenseStatus   @default(PENDING)
+  department  String?
+  projectId   String?
+  project     Project?        @relation(fields: [projectId], references: [id])
+
   // Approval workflow
-  teamLeadId    String?
-  teamLead      User?            @relation("ExpenseTeamLead", fields: [teamLeadId], references: [id])
+  teamLeadId         String?
+  teamLead           User?     @relation("ExpenseTeamLead", fields: [teamLeadId], references: [id])
   teamLeadApprovedAt DateTime?
-  teamLeadNotes String?
-  
+  teamLeadNotes      String?
+
   financeApprovedById String?
-  financeApprovedBy   User?      @relation("ExpenseFinanceApproval", fields: [financeApprovedById], references: [id])
+  financeApprovedBy   User?     @relation("ExpenseFinanceApproval", fields: [financeApprovedById], references: [id])
   financeApprovedAt   DateTime?
   financeNotes        String?
-  
+
   directorApprovedById String?
-  directorApprovedBy   User?      @relation("ExpenseDirectorApproval", fields: [directorApprovedById], references: [id])
+  directorApprovedBy   User?     @relation("ExpenseDirectorApproval", fields: [directorApprovedById], references: [id])
   directorApprovedAt   DateTime?
   directorNotes        String?
-  
+
   // Payment details
   paidAt        DateTime?
   paidBy        String?
   paymentMethod PaymentMethod?
   voucherUrl    String? // PDF voucher URL
-  
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  attachments   ExpenseAttachment[]
-  comments      ExpenseComment[]
-  budgetId      String?
-  budget        DepartmentBudget? @relation(fields: [budgetId], references: [id])
+  attachments ExpenseAttachment[]
+  comments    ExpenseComment[]
+  budgetId    String?
+  budget      DepartmentBudget?   @relation(fields: [budgetId], references: [id])
 }
 
 enum ExpenseCategory {
@@ -602,65 +666,65 @@ enum ExpenseStatus {
 
 // Expense attachments
 model ExpenseAttachment {
-  id              String         @id @default(cuid())
+  id               String         @id @default(cuid())
   expenseRequestId String
-  expenseRequest  ExpenseRequest @relation(fields: [expenseRequestId], references: [id], onDelete: Cascade)
-  fileName        String
-  fileUrl         String
-  fileType        String
-  fileSize        Int?
-  uploadedById    String
-  uploadedBy      User           @relation(fields: [uploadedById], references: [id])
-  createdAt       DateTime       @default(now())
+  expenseRequest   ExpenseRequest @relation(fields: [expenseRequestId], references: [id], onDelete: Cascade)
+  fileName         String
+  fileUrl          String
+  fileType         String
+  fileSize         Int?
+  uploadedById     String
+  uploadedBy       User           @relation(fields: [uploadedById], references: [id])
+  createdAt        DateTime       @default(now())
 }
 
 // Expense comments
 model ExpenseComment {
-  id              String         @id @default(cuid())
+  id               String         @id @default(cuid())
   expenseRequestId String
-  expenseRequest  ExpenseRequest @relation(fields: [expenseRequestId], references: [id], onDelete: Cascade)
-  authorId        String
-  author          User           @relation(fields: [authorId], references: [id])
-  content         String
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  expenseRequest   ExpenseRequest @relation(fields: [expenseRequestId], references: [id], onDelete: Cascade)
+  authorId         String
+  author           User           @relation(fields: [authorId], references: [id])
+  content          String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 // Departmental budget model
 model DepartmentBudget {
-  id              String         @id @default(cuid())
+  id              String  @id @default(cuid())
   department      String
-  budgetPeriod    String         // e.g., "2025-01" for January 2025
+  budgetPeriod    String // e.g., "2025-01" for January 2025
   allocatedAmount Float
-  spentAmount     Float          @default(0)
+  spentAmount     Float   @default(0)
   remainingAmount Float
-  isActive        Boolean        @default(true)
-  
+  isActive        Boolean @default(true)
+
   // Budget management
-  createdById     String
-  createdBy       User           @relation("BudgetCreator", fields: [createdById], references: [id])
+  createdById      String
+  createdBy        User    @relation("BudgetCreator", fields: [createdById], references: [id])
   lastModifiedById String?
-  lastModifiedBy  User?          @relation("BudgetModifier", fields: [lastModifiedById], references: [id])
-  
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  
+  lastModifiedBy   User?   @relation("BudgetModifier", fields: [lastModifiedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  adjustments     BudgetAdjustment[]
-  expenses        ExpenseRequest[]
+  adjustments BudgetAdjustment[]
+  expenses    ExpenseRequest[]
 }
 
 // Budget adjustments for top-ups or reductions
 model BudgetAdjustment {
-  id              String         @id @default(cuid())
-  budgetId        String
-  budget          DepartmentBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-  amount          Float
-  type            AdjustmentType
-  reason          String
-  approvedById    String
-  approvedBy      User           @relation(fields: [approvedById], references: [id])
-  createdAt       DateTime       @default(now())
+  id           String           @id @default(cuid())
+  budgetId     String
+  budget       DepartmentBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  amount       Float
+  type         AdjustmentType
+  reason       String
+  approvedById String
+  approvedBy   User             @relation(fields: [approvedById], references: [id])
+  createdAt    DateTime         @default(now())
 }
 
 enum AdjustmentType {
@@ -671,16 +735,16 @@ enum AdjustmentType {
 
 // Financial reports model
 model FinancialReport {
-  id              String         @id @default(cuid())
-  reportType      ReportType
-  period          String         // e.g., "2025-01" for January 2025
-  title           String
-  description     String?
-  fileUrl         String?        // PDF report URL
-  data            Json?          // Report data as JSON
-  generatedById   String
-  generatedBy     User           @relation(fields: [generatedById], references: [id])
-  createdAt       DateTime       @default(now())
+  id            String     @id @default(cuid())
+  reportType    ReportType
+  period        String // e.g., "2025-01" for January 2025
+  title         String
+  description   String?
+  fileUrl       String? // PDF report URL
+  data          Json? // Report data as JSON
+  generatedById String
+  generatedBy   User       @relation(fields: [generatedById], references: [id])
+  createdAt     DateTime   @default(now())
 }
 
 enum ReportType {
@@ -708,18 +772,19 @@ model Client {
 
 // Team model for organizational structure
 model Team {
-  id          String     @id @default(cuid())
-  name        String     @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String?
-  color       String?    @default("#4f46e5")
-  icon        String?    // Icon name for UI display
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  
+  color       String?  @default("#4f46e5")
+  icon        String? // Icon name for UI display
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   // Relations
-  members     UserTeam[]
-  tasks       TaskTeam[]
+  members UserTeam[]
+  tasks   TaskTeam[]
+  kpis    KPI[]
 }
 
 // User-Team junction table (many-to-many)
@@ -731,7 +796,7 @@ model UserTeam {
   team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   role     TeamRole @default(MEMBER)
   joinedAt DateTime @default(now())
-  
+
   @@unique([userId, teamId])
 }
 
@@ -749,55 +814,61 @@ model TaskTeam {
   teamId     String
   team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   assignedAt DateTime @default(now())
-  
+
   @@unique([taskId, teamId])
 }
 
 // Employee Profile System
 model EmployeeProfile {
-  id                String            @id @default(cuid())
-  userId            String            @unique
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   // Personal Information
-  fullName          String
-  gender            String?
-  dateOfBirth       DateTime?
-  nationalId        String?           @unique
-  phone             String?
-  email             String?
-  address           String?
-  
+  fullName    String
+  gender      String?
+  dateOfBirth DateTime?
+  nationalId  String?   @unique
+  phone       String?
+  email       String?
+  address     String?
+
   // Professional Information
-  department        String?
-  designation       String?
-  supervisorId      String?
-  supervisor        EmployeeProfile?  @relation("EmployeeSupervisor", fields: [supervisorId], references: [id])
-  subordinates      EmployeeProfile[] @relation("EmployeeSupervisor")
-  employmentType    EmploymentType    @default(FULL_TIME)
-  startDate         DateTime?
-  status            EmployeeStatus    @default(ACTIVE)
-  
+  department     String?
+  designation    String?
+  supervisorId   String?
+  supervisor     EmployeeProfile?  @relation("EmployeeSupervisor", fields: [supervisorId], references: [id])
+  subordinates   EmployeeProfile[] @relation("EmployeeSupervisor")
+  employmentType EmploymentType    @default(FULL_TIME)
+  startDate      DateTime?
+  status         EmployeeStatus    @default(ACTIVE)
+
   // System Information
-  employeeId        String            @unique // RYD-YYMM-XXXX format
-  profilePhoto      String?
-  bio               String?
-  
+  employeeId   String  @unique // RYD-YYMM-XXXX format
+  profilePhoto String?
+  bio          String?
+
   // Relations
-  documents         EmployeeDocument[]
-  onboardingItems   OnboardingItem[]
+  documents          EmployeeDocument[]
+  onboardingItems    OnboardingItem[]
   performanceReviews PerformanceReview[]
-  leaveRequests     LeaveRequest[]
-  attendanceRecords AttendanceRecord[]
-  privateNotes      PrivateNote[]
-  timelineEvents    TimelineEvent[]
-  welcomeNotes      WelcomeNote[]
-  
+  leaveRequests      LeaveRequest[]
+  attendanceRecords  AttendanceRecord[]
+  privateNotes       PrivateNote[]
+  timelineEvents     TimelineEvent[]
+  welcomeNotes       WelcomeNote[]
+
+  // Enhanced Leave & Performance relations
+  leaveBalances LeaveBalance[]
+  absenceAlerts AbsenceAlert[]
+  kpis          KPI[]
+  reviews360    Review360[]
+
   // Audit fields
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  createdById       String?
-  createdBy         User?             @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  createdBy   User?    @relation("EmployeeCreatedBy", fields: [createdById], references: [id])
 }
 
 enum EmploymentType {
@@ -818,21 +889,21 @@ enum EmployeeStatus {
 
 // Employee Document System
 model EmployeeDocument {
-  id            String              @id @default(cuid())
-  employeeId    String
-  employee      EmployeeProfile     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  title         String
-  description   String?
-  fileName      String
-  fileUrl       String
-  fileType      String
-  fileSize      Int?
-  category      EmployeeDocumentCategory    @default(IDENTIFICATION)
-  uploadedById  String
-  uploadedBy    User                @relation(fields: [uploadedById], references: [id])
-  isPublic      Boolean             @default(false)
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id           String                   @id @default(cuid())
+  employeeId   String
+  employee     EmployeeProfile          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  fileName     String
+  fileUrl      String
+  fileType     String
+  fileSize     Int?
+  category     EmployeeDocumentCategory @default(IDENTIFICATION)
+  uploadedById String
+  uploadedBy   User                     @relation(fields: [uploadedById], references: [id])
+  isPublic     Boolean                  @default(false)
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
 }
 
 enum EmployeeDocumentCategory {
@@ -846,18 +917,18 @@ enum EmployeeDocumentCategory {
 
 // Onboarding System
 model OnboardingItem {
-  id          String          @id @default(cuid())
+  id          String             @id @default(cuid())
   employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee    EmployeeProfile    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   title       String
   description String?
   category    OnboardingCategory @default(ORIENTATION)
-  isRequired  Boolean         @default(true)
-  isCompleted Boolean         @default(false)
+  isRequired  Boolean            @default(true)
+  isCompleted Boolean            @default(false)
   completedAt DateTime?
   notes       String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
 
 enum OnboardingCategory {
@@ -868,47 +939,248 @@ enum OnboardingCategory {
   WELCOME
 }
 
-// Performance Management
+// Enhanced Performance & Evaluation Management
 model PerformanceReview {
-  id          String          @id @default(cuid())
-  employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  rating      Int?            // 1-5 scale
-  goals       String?
-  achievements String?
+  id                  String          @id @default(cuid())
+  employeeId          String
+  employee            EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title               String
+  description         String?
+  rating              Int? // 1-5 scale
+  goals               String?
+  achievements        String?
   areasForImprovement String?
-  reviewerId  String
-  reviewer    User            @relation(fields: [reviewerId], references: [id])
-  reviewDate  DateTime        @default(now())
-  nextReviewDate DateTime?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  reviewerId          String
+  reviewer            User            @relation(fields: [reviewerId], references: [id])
+  reviewDate          DateTime        @default(now())
+  nextReviewDate      DateTime?
+  reviewType          ReviewType      @default(SUPERVISOR)
+  isCompleted         Boolean         @default(false)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([employeeId, reviewDate])
 }
 
-// Leave Management
-model LeaveRequest {
-  id          String          @id @default(cuid())
-  employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  type        LeaveType
+enum ReviewType {
+  SUPERVISOR
+  PEER
+  SELF
+  THREE_SIXTY
+}
+
+// KPI Management
+model KPI {
+  id          String           @id @default(cuid())
+  employeeId  String?
+  employee    EmployeeProfile? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  teamId      String?
+  team        Team?            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  target      Float
+  current     Float            @default(0)
+  unit        String? // e.g., "tasks", "hours", "%"
+  category    KPICategory
   startDate   DateTime
   endDate     DateTime
-  days        Int
+  status      KPIStatus        @default(IN_PROGRESS)
+  createdById String
+  createdBy   User             @relation("KPICreator", fields: [createdById], references: [id])
+  progress    Float            @default(0) // Percentage
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([employeeId, status])
+  @@index([teamId, status])
+}
+
+enum KPICategory {
+  TASK_COMPLETION
+  PROJECT_DELIVERY
+  ENGAGEMENT
+  QUALITY
+  INNOVATION
+  TEAMWORK
+  CUSTOM
+}
+
+enum KPIStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  CANCELLED
+}
+
+// 360° Review System
+model Review360 {
+  id         String          @id @default(cuid())
+  employeeId String
+  employee   EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User            @relation("Review360Reviewer", fields: [reviewerId], references: [id])
+  reviewType ReviewType360
+  period     String // e.g., "2025-Q1"
+
+  // Rating categories (1-5 scale)
+  communicationRating   Int?
+  teamworkRating        Int?
+  leadershipRating      Int?
+  technicalSkillsRating Int?
+  problemSolvingRating  Int?
+  initiativeRating      Int?
+  overallRating         Float?
+
+  // Comments
+  strengths           String?
+  areasForImprovement String?
+  additionalComments  String?
+
+  isAnonymous Boolean   @default(false)
+  isCompleted Boolean   @default(false)
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([employeeId, period])
+  @@index([reviewerId, period])
+}
+
+enum ReviewType360 {
+  SELF
+  PEER
+  SUPERVISOR
+  SUBORDINATE
+}
+
+// Rewards & Recognition System
+model RewardBadge {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  icon        String? // Icon name or emoji
+  color       String        @default("#FFD700")
+  points      Int           @default(0)
+  category    BadgeCategory
+  criteria    String? // Achievement criteria
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  userRewards UserReward[]
+}
+
+enum BadgeCategory {
+  EXCELLENCE
+  LEADERSHIP
+  INNOVATION
+  TEAMWORK
+  ATTENDANCE
+  MILESTONE
+  CUSTOM
+}
+
+// User rewards (junction table)
+model UserReward {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId     String
+  badge       RewardBadge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  awardedById String
+  awardedBy   User        @relation("RewardGranter", fields: [awardedById], references: [id])
   reason      String?
-  status      LeaveStatus     @default(PENDING)
-  approvedById String?
-  approvedBy  User?           @relation(fields: [approvedById], references: [id])
-  approvedAt  DateTime?
-  comments    String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  awardedAt   DateTime    @default(now())
+
+  @@index([userId, awardedAt])
+  @@index([badgeId])
+}
+
+// Enhanced Leave & Availability Management
+model LeaveRequest {
+  id            String           @id @default(cuid())
+  employeeId    String
+  employee      EmployeeProfile  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveTypeId   String?
+  leaveType     LeaveTypeConfig? @relation(fields: [leaveTypeId], references: [id])
+  type          LeaveType // Keep for backward compatibility
+  startDate     DateTime
+  endDate       DateTime
+  days          Int
+  reason        String?
+  status        LeaveStatus      @default(PENDING)
+  approvedById  String?
+  approvedBy    User?            @relation(fields: [approvedById], references: [id])
+  approvedAt    DateTime?
+  comments      String?
+  attachments   String? // Medical certificates, etc.
+  handoverNotes String? // Work handover information
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([employeeId, status])
+  @@index([startDate, endDate])
+}
+
+// Custom leave types configuration
+model LeaveTypeConfig {
+  id               String         @id @default(cuid())
+  name             String         @unique
+  code             String         @unique // e.g., SICK, ANNUAL
+  description      String?
+  defaultDays      Int            @default(0)
+  color            String         @default("#4f46e5")
+  requiresApproval Boolean        @default(true)
+  requiresDocument Boolean        @default(false)
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  leaveRequests    LeaveRequest[]
+}
+
+// Leave balance tracking
+model LeaveBalance {
+  id         String          @id @default(cuid())
+  employeeId String
+  employee   EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType  LeaveType
+  year       Int
+  allocated  Int             @default(0)
+  used       Int             @default(0)
+  remaining  Int             @default(0)
+  carried    Int             @default(0) // Carried forward from previous year
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@unique([employeeId, leaveType, year])
+  @@index([employeeId, year])
+}
+
+// Absence alerts for HR
+model AbsenceAlert {
+  id         String          @id @default(cuid())
+  employeeId String
+  employee   EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  startDate  DateTime
+  endDate    DateTime?
+  type       AbsenceType
+  reason     String?
+  isResolved Boolean         @default(false)
+  notifiedAt DateTime        @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+  notes      String?
+  createdAt  DateTime        @default(now())
+
+  @@index([employeeId, isResolved])
 }
 
 enum LeaveType {
   ANNUAL
   SICK
+  STUDY
+  COMPASSIONATE
   MATERNITY
   PATERNITY
   EMERGENCY
@@ -923,19 +1195,26 @@ enum LeaveStatus {
   CANCELLED
 }
 
+enum AbsenceType {
+  UNPLANNED
+  EXTENDED_LEAVE
+  NO_SHOW
+  LATE_ARRIVAL
+}
+
 // Attendance Management
 model AttendanceRecord {
-  id          String          @id @default(cuid())
+  id          String           @id @default(cuid())
   employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee    EmployeeProfile  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   date        DateTime
   checkIn     DateTime?
   checkOut    DateTime?
   hoursWorked Float?
   status      AttendanceStatus @default(PRESENT)
   notes       String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 enum AttendanceStatus {
@@ -948,30 +1227,30 @@ enum AttendanceStatus {
 
 // Private Notes System
 model PrivateNote {
-  id          String          @id @default(cuid())
-  employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  content     String
-  authorId    String
-  author      User            @relation(fields: [authorId], references: [id])
-  isConfidential Boolean      @default(true)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id             String          @id @default(cuid())
+  employeeId     String
+  employee       EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  content        String
+  authorId       String
+  author         User            @relation(fields: [authorId], references: [id])
+  isConfidential Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 // Timeline Events
 model TimelineEvent {
-  id          String          @id @default(cuid())
+  id          String            @id @default(cuid())
   employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee    EmployeeProfile   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   type        TimelineEventType
   title       String
   description String?
   date        DateTime
-  metadata    Json?           // Store additional event-specific data
+  metadata    Json? // Store additional event-specific data
   createdById String?
-  createdBy   User?           @relation(fields: [createdById], references: [id])
-  createdAt   DateTime        @default(now())
+  createdBy   User?             @relation(fields: [createdById], references: [id])
+  createdAt   DateTime          @default(now())
 }
 
 enum TimelineEventType {
@@ -989,27 +1268,27 @@ enum TimelineEventType {
 
 // Activity Log for RBAC
 model ActivityLog {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  action      String   // CREATE, UPDATE, DELETE, VIEW, etc.
-  resource    String   // employee, document, etc.
-  resourceId  String?  // ID of the affected resource
-  details     Json?    // Additional action details
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String // CREATE, UPDATE, DELETE, VIEW, etc.
+  resource   String // employee, document, etc.
+  resourceId String? // ID of the affected resource
+  details    Json? // Additional action details
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
 }
 
 // Welcome Notes
 model WelcomeNote {
-  id          String          @id @default(cuid())
-  employeeId  String
-  employee    EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  content     String
-  authorId    String
-  author      User            @relation(fields: [authorId], references: [id])
-  isVisible   Boolean         @default(true)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id         String          @id @default(cuid())
+  employeeId String
+  employee   EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  content    String
+  authorId   String
+  author     User            @relation(fields: [authorId], references: [id])
+  isVisible  Boolean         @default(true)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
 }

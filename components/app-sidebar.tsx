@@ -123,10 +123,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       });
     }
     
-    // Attendance - basic feature for all users
+    // Attendance & Work Tracking - basic feature for all users
     items.push({
         title: "Attendance",
         url: "/dashboard/attendance",
+        icon: CalendarIcon,
+    });
+    
+    // Leave Management - all users can request leave
+    items.push({
+        title: "Leave",
+        url: "/dashboard/leave",
         icon: CalendarIcon,
     });
     
@@ -242,24 +249,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
     });
     
-    // Performance - staff and above
-    if (permissions.canViewReports) {
-      items.push({
+    // Performance & Evaluation - all users can track their own performance
+    items.push({
         title: "Performance",
         icon: HeartPulseIcon,
         url: "/dashboard/performance",
         items: [
           {
-            title: "Feedback",
-            url: "/dashboard/performance/feedback",
+            title: "My KPIs",
+            url: "/dashboard/performance",
           },
           {
-            title: "Reviews",
-            url: "/dashboard/performance/reviews",
+            title: "360° Reviews",
+            url: "/dashboard/performance?tab=reviews",
+          },
+          {
+            title: "My Rewards",
+            url: "/dashboard/performance?tab=rewards",
           },
         ],
-      });
-    }
+    });
     
     return items;
   }, [permissions]);
