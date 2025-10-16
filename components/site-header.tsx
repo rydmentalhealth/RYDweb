@@ -2,7 +2,7 @@
 
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { NotificationCenter } from "@/components/dashboard/notifications/notification-center"
+import { NotificationBell } from "@/components/communication/notification-bell"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -44,7 +44,7 @@ export function SiteHeader() {
         {/* Right side */}
         <div className="flex items-center gap-2">
           {/* Notifications */}
-          <NotificationCenter />
+          <NotificationBell />
 
           {/* User Menu */}
           {user && (
