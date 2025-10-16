@@ -131,6 +131,8 @@ model VerificationToken {
 
 enum UserRole {
   SUPER_ADMIN
+  CEO
+  CFO
   ADMIN
   DIRECTOR
   HR_OFFICER

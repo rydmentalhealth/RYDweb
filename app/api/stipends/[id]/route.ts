@@ -1,32 +1,36 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from '@/lib/auth'
-import { prisma } from '@/lib/db'
-import { z } from 'zod'
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { hasPermission } from "@/lib/auth/rbac"
+import { UserRole } from "@/lib/generated/prisma"
 
-const updateStipendSchema = z.object({
-  status: z.enum(['PENDING', 'APPROVED', 'PAID', 'REJECTED']).optional(),
-  paymentDate: z.string().optional(),
-  paymentMethod: z.enum(['MOBILE_MONEY', 'BANK_TRANSFER', 'CASH', 'CHEQUE']).optional(),
-  remarks: z.string().optional(),
-})
-
-// GET /api/stipends/[id] - Get specific stipend
 export async function GET(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
+    const session = await auth()
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      })
     }
 
-    const stipend = await prisma.stipend.findUnique({
+    const userRole = session.user.role as UserRole
+    if (!hasPermission(userRole, 'VIEW_STIPENDS')) {
+      return new NextResponse(JSON.stringify({ error: "Insufficient permissions" }), {
+        status: 403,
+      })
+    }
+
+    const stipend = await db.stipend.findUnique({
       where: { id: params.id },
       include: {
         employee: {
           select: {
             id: true,
+            firstName: true,
+            lastName: true,
             name: true,
             email: true,
             department: true,
@@ -36,6 +40,8 @@ export async function GET(
         approvedBy: {
           select: {
             id: true,
+            firstName: true,
+            lastName: true,
             name: true,
           }
         }
@@ -43,45 +49,94 @@ export async function GET(
     })
 
     if (!stipend) {
-      return NextResponse.json({ error: 'Stipend not found' }, { status: 404 })
+      return new NextResponse(JSON.stringify({ error: "Stipend not found" }), {
+        status: 404,
+      })
     }
 
-    return NextResponse.json(stipend)
+    return NextResponse.json({
+      ...stipend,
+      employee: {
+        ...stipend.employee,
+        name: stipend.employee.name || `${stipend.employee.firstName || ''} ${stipend.employee.lastName || ''}`.trim()
+      },
+      approvedBy: stipend.approvedBy ? {
+        ...stipend.approvedBy,
+        name: stipend.approvedBy.name || `${stipend.approvedBy.firstName || ''} ${stipend.approvedBy.lastName || ''}`.trim()
+      } : null
+    })
   } catch (error) {
-    console.error('Error fetching stipend:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error fetching stipend:", error)
+    return new NextResponse(JSON.stringify({ error: "Failed to fetch stipend" }), {
+      status: 500,
+    })
   }
 }
 
-// PATCH /api/stipends/[id] - Update stipend status
-export async function PATCH(
-  request: NextRequest,
+export async function PUT(
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
+    const session = await auth()
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      })
     }
 
-    // Check if user has permission to update stipends
-    if (!['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(session.user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const userRole = session.user.role as UserRole
+    if (!hasPermission(userRole, 'EDIT_STIPENDS')) {
+      return new NextResponse(JSON.stringify({ error: "Insufficient permissions" }), {
+        status: 403,
+      })
     }
 
-    const body = await request.json()
-    const validatedData = updateStipendSchema.parse(body)
+    const body = await req.json()
+    const {
+      amount,
+      type,
+      status,
+      paymentMethod,
+      remarks,
+      department,
+      paymentDate
+    } = body
 
-    const stipend = await prisma.stipend.update({
+    // Check if stipend exists
+    const existingStipend = await db.stipend.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!existingStipend) {
+      return new NextResponse(JSON.stringify({ error: "Stipend not found" }), {
+        status: 404,
+      })
+    }
+
+    const updateData: any = {}
+    if (amount !== undefined) updateData.amount = parseFloat(amount)
+    if (type !== undefined) updateData.type = type
+    if (status !== undefined) {
+      updateData.status = status
+      if (status === 'APPROVED' || status === 'PAID') {
+        updateData.approvedById = session.user.id
+      }
+    }
+    if (paymentMethod !== undefined) updateData.paymentMethod = paymentMethod
+    if (remarks !== undefined) updateData.remarks = remarks
+    if (department !== undefined) updateData.department = department
+    if (paymentDate !== undefined) updateData.paymentDate = paymentDate ? new Date(paymentDate) : null
+
+    const stipend = await db.stipend.update({
       where: { id: params.id },
-      data: {
-        ...validatedData,
-        paymentDate: validatedData.paymentDate ? new Date(validatedData.paymentDate) : undefined,
-      },
+      data: updateData,
       include: {
         employee: {
           select: {
             id: true,
+            firstName: true,
+            lastName: true,
             name: true,
             email: true,
             department: true,
@@ -91,45 +146,72 @@ export async function PATCH(
         approvedBy: {
           select: {
             id: true,
+            firstName: true,
+            lastName: true,
             name: true,
           }
         }
       }
     })
 
-    return NextResponse.json(stipend)
+    return NextResponse.json({
+      ...stipend,
+      employee: {
+        ...stipend.employee,
+        name: stipend.employee.name || `${stipend.employee.firstName || ''} ${stipend.employee.lastName || ''}`.trim()
+      },
+      approvedBy: stipend.approvedBy ? {
+        ...stipend.approvedBy,
+        name: stipend.approvedBy.name || `${stipend.approvedBy.firstName || ''} ${stipend.approvedBy.lastName || ''}`.trim()
+      } : null
+    })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
-    }
-    console.error('Error updating stipend:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error updating stipend:", error)
+    return new NextResponse(JSON.stringify({ error: "Failed to update stipend" }), {
+      status: 500,
+    })
   }
 }
 
-// DELETE /api/stipends/[id] - Delete stipend
 export async function DELETE(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
+    const session = await auth()
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      })
     }
 
-    // Check if user has permission to delete stipends
-    if (!['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const userRole = session.user.role as UserRole
+    if (!hasPermission(userRole, 'DELETE_STIPENDS')) {
+      return new NextResponse(JSON.stringify({ error: "Insufficient permissions" }), {
+        status: 403,
+      })
     }
 
-    await prisma.stipend.delete({
+    // Check if stipend exists
+    const existingStipend = await db.stipend.findUnique({
       where: { id: params.id }
     })
 
-    return NextResponse.json({ message: 'Stipend deleted successfully' })
+    if (!existingStipend) {
+      return new NextResponse(JSON.stringify({ error: "Stipend not found" }), {
+        status: 404,
+      })
+    }
+
+    await db.stipend.delete({
+      where: { id: params.id }
+    })
+
+    return NextResponse.json({ message: "Stipend deleted successfully" })
   } catch (error) {
-    console.error('Error deleting stipend:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error deleting stipend:", error)
+    return new NextResponse(JSON.stringify({ error: "Failed to delete stipend" }), {
+      status: 500,
+    })
   }
 }

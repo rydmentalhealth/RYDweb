@@ -1,45 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from '@/lib/auth'
-import { prisma } from '@/lib/db'
-import { z } from 'zod'
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { hasPermission } from "@/lib/auth/rbac"
+import { UserRole } from "@/lib/generated/prisma"
 
-const stipendSchema = z.object({
-  employeeId: z.string(),
-  amount: z.number().positive(),
-  type: z.enum(['MONTHLY_STIPEND', 'ALLOWANCE', 'REIMBURSEMENT', 'BONUS', 'VOLUNTEER_ALLOWANCE', 'TRANSPORT_ALLOWANCE', 'MEAL_ALLOWANCE']),
-  paymentMethod: z.enum(['MOBILE_MONEY', 'BANK_TRANSFER', 'CASH', 'CHEQUE']).optional(),
-  remarks: z.string().optional(),
-  department: z.string().optional(),
-})
-
-// GET /api/stipends - Get all stipends with filtering
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession()
+    const session = await auth()
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      })
     }
 
-    const { searchParams } = new URL(request.url)
-    const department = searchParams.get('department')
+    const userRole = session.user.role as UserRole
+    if (!hasPermission(userRole, 'VIEW_STIPENDS')) {
+      return new NextResponse(JSON.stringify({ error: "Insufficient permissions" }), {
+        status: 403,
+      })
+    }
+
+    const { searchParams } = new URL(req.url)
     const status = searchParams.get('status')
-    const type = searchParams.get('type')
+    const department = searchParams.get('department')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const skip = (page - 1) * limit
 
     const where: any = {}
-    if (department) where.department = department
-    if (status) where.status = status
-    if (type) where.type = type
+    if (status && status !== 'all') {
+      where.status = status
+    }
+    if (department && department !== 'all') {
+      where.department = department
+    }
 
     const [stipends, total] = await Promise.all([
-      prisma.stipend.findMany({
+      db.stipend.findMany({
         where,
         include: {
           employee: {
             select: {
               id: true,
+              firstName: true,
+              lastName: true,
               name: true,
               email: true,
               department: true,
@@ -49,19 +53,33 @@ export async function GET(request: NextRequest) {
           approvedBy: {
             select: {
               id: true,
+              firstName: true,
+              lastName: true,
               name: true,
             }
           }
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          createdAt: 'desc'
+        },
         skip,
         take: limit,
       }),
-      prisma.stipend.count({ where })
+      db.stipend.count({ where })
     ])
 
     return NextResponse.json({
-      stipends,
+      stipends: stipends.map(stipend => ({
+        ...stipend,
+        employee: {
+          ...stipend.employee,
+          name: stipend.employee.name || `${stipend.employee.firstName || ''} ${stipend.employee.lastName || ''}`.trim()
+        },
+        approvedBy: stipend.approvedBy ? {
+          ...stipend.approvedBy,
+          name: stipend.approvedBy.name || `${stipend.approvedBy.firstName || ''} ${stipend.approvedBy.lastName || ''}`.trim()
+        } : null
+      })),
       pagination: {
         page,
         limit,
@@ -70,68 +88,95 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error fetching stipends:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error fetching stipends:", error)
+    return new NextResponse(JSON.stringify({ error: "Failed to fetch stipends" }), {
+      status: 500,
+    })
   }
 }
 
-// POST /api/stipends - Create new stipend
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession()
+    const session = await auth()
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      })
     }
 
-    // Check if user has permission to create stipends
-    if (!['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(session.user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const userRole = session.user.role as UserRole
+    if (!hasPermission(userRole, 'CREATE_STIPENDS')) {
+      return new NextResponse(JSON.stringify({ error: "Insufficient permissions" }), {
+        status: 403,
+      })
     }
 
-    const body = await request.json()
-    const validatedData = stipendSchema.parse(body)
+    const body = await req.json()
+    const {
+      employeeId,
+      amount,
+      type,
+      paymentMethod,
+      remarks,
+      department,
+      paymentDate
+    } = body
 
-    // Get employee details
-    const employee = await prisma.user.findUnique({
-      where: { id: validatedData.employeeId },
-      select: { department: true }
+    // Validate required fields
+    if (!employeeId || !amount || !type) {
+      return new NextResponse(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+      })
+    }
+
+    // Check if employee exists
+    const employee = await db.user.findUnique({
+      where: { id: employeeId }
     })
 
     if (!employee) {
-      return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
+      return new NextResponse(JSON.stringify({ error: "Employee not found" }), {
+        status: 404,
+      })
     }
 
-    const stipend = await prisma.stipend.create({
+    const stipend = await db.stipend.create({
       data: {
-        ...validatedData,
-        department: validatedData.department || employee.department,
-        approvedById: session.user.id,
+        employeeId,
+        amount: parseFloat(amount),
+        type,
+        status: 'PENDING',
+        paymentMethod: paymentMethod || null,
+        remarks: remarks || null,
+        department: department || employee.department,
+        paymentDate: paymentDate ? new Date(paymentDate) : null,
       },
       include: {
         employee: {
           select: {
             id: true,
+            firstName: true,
+            lastName: true,
             name: true,
             email: true,
             department: true,
             jobTitle: true,
           }
-        },
-        approvedBy: {
-          select: {
-            id: true,
-            name: true,
-          }
         }
       }
     })
 
-    return NextResponse.json(stipend, { status: 201 })
+    return NextResponse.json({
+      ...stipend,
+      employee: {
+        ...stipend.employee,
+        name: stipend.employee.name || `${stipend.employee.firstName || ''} ${stipend.employee.lastName || ''}`.trim()
+      }
+    })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
-    }
-    console.error('Error creating stipend:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Error creating stipend:", error)
+    return new NextResponse(JSON.stringify({ error: "Failed to create stipend" }), {
+      status: 500,
+    })
   }
 }
