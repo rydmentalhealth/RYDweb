@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus, Search, Filter, Users, Building2, Calendar, FileText, Award, Clock, MoreHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { AddEmployeeDialog } from '@/components/hr/add-employee-dialog';
 
 interface Employee {
   id: string;
@@ -179,27 +180,7 @@ export default function EmployeesPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Employee
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add New Employee</DialogTitle>
-                <DialogDescription>
-                  Create a new employee profile. This will require an existing user account.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Employee creation form will be implemented here.
-                </p>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <AddEmployeeDialog onEmployeeAdded={fetchEmployees} />
         </div>
       </div>
 
@@ -213,7 +194,7 @@ export default function EmployeesPage() {
           <CardContent>
             <div className="text-2xl font-bold">{employees.length}</div>
             <p className="text-xs text-muted-foreground">
-              Active staff and volunteers
+              In employee directory
             </p>
           </CardContent>
         </Card>
@@ -347,8 +328,23 @@ export default function EmployeesPage() {
                     >
                       View Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                    <DropdownMenuItem>Send Email</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        // For now, redirect to the employee detail page for editing
+                        router.push(`/employees/${employee.id}?edit=true`)
+                      }}
+                    >
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (employee.user?.email) {
+                          window.location.href = `mailto:${employee.user.email}`
+                        }
+                      }}
+                    >
+                      Send Email
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

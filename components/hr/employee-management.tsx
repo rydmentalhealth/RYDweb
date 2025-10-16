@@ -26,6 +26,8 @@ import {
   Phone,
   MapPin
 } from 'lucide-react'
+import { AddEmployeeDialog } from './add-employee-dialog'
+import { EditEmployeeDialog } from './edit-employee-dialog'
 
 interface Employee {
   id: string
@@ -45,6 +47,8 @@ export function EmployeeManagement() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterDepartment, setFilterDepartment] = useState('all')
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchEmployees()
@@ -52,60 +56,31 @@ export function EmployeeManagement() {
 
   const fetchEmployees = async () => {
     try {
-      // Mock data - replace with actual API call
-      const mockEmployees: Employee[] = [
-        {
-          id: '1',
-          name: 'John Doe',
-          email: 'john.doe@rydmentalhealth.org',
-          role: 'Therapist',
-          department: 'Therapy',
-          status: 'ACTIVE',
-          hireDate: '2023-01-15',
-          phone: '+256 700 123 456',
-          location: 'Kampala',
-          manager: 'Dr. Sarah Smith'
-        },
-        {
-          id: '2',
-          name: 'Jane Smith',
-          email: 'jane.smith@rydmentalhealth.org',
-          role: 'Outreach Coordinator',
-          department: 'Outreach',
-          status: 'ACTIVE',
-          hireDate: '2023-03-20',
-          phone: '+256 700 234 567',
-          location: 'Kampala',
-          manager: 'Michael Johnson'
-        },
-        {
-          id: '3',
-          name: 'Mike Johnson',
-          email: 'mike.johnson@rydmentalhealth.org',
-          role: 'Finance Manager',
-          department: 'Finance',
-          status: 'ACTIVE',
-          hireDate: '2022-11-10',
-          phone: '+256 700 345 678',
-          location: 'Kampala',
-          manager: 'Dr. Sarah Smith'
-        },
-        {
-          id: '4',
-          name: 'Sarah Wilson',
-          email: 'sarah.wilson@rydmentalhealth.org',
-          role: 'Volunteer',
-          department: 'Outreach',
-          status: 'PENDING',
-          hireDate: '2024-01-05',
-          phone: '+256 700 456 789',
-          location: 'Kampala',
-          manager: 'Jane Smith'
-        }
-      ]
-      setEmployees(mockEmployees)
+      const response = await fetch('/api/employees?limit=100')
+      if (!response.ok) {
+        throw new Error('Failed to fetch employees')
+      }
+      const data = await response.json()
+      
+      // Transform the API response to match our interface
+      const transformedEmployees: Employee[] = data.employees.map((emp: any) => ({
+        id: emp.id,
+        name: emp.fullName,
+        email: emp.email || emp.user?.email || '',
+        role: emp.designation || 'N/A',
+        department: emp.department || 'N/A',
+        status: emp.status,
+        hireDate: emp.startDate || emp.createdAt,
+        phone: emp.phone,
+        location: 'Kampala', // Default location
+        manager: emp.supervisor?.fullName
+      }))
+      
+      setEmployees(transformedEmployees)
     } catch (error) {
       console.error('Error fetching employees:', error)
+      // Fallback to empty array on error
+      setEmployees([])
     } finally {
       setLoading(false)
     }
@@ -138,7 +113,17 @@ export function EmployeeManagement() {
     return matchesSearch && matchesDepartment
   })
 
-  const departments = ['all', ...Array.from(new Set(employees.map(emp => emp.department)))]
+  const departments = ['all', ...Array.from(new Set(employees.map(emp => emp.department).filter(Boolean)))]
+
+  const handleEditEmployee = (employee: Employee) => {
+    setEditingEmployee(employee)
+    setEditDialogOpen(true)
+  }
+
+  const handleViewEmployee = (employee: Employee) => {
+    // Navigate to employee detail page or show view modal
+    window.location.href = `/employees/${employee.id}`
+  }
 
   if (loading) {
     return (
@@ -158,10 +143,7 @@ export function EmployeeManagement() {
           <h2 className="text-2xl font-bold">Employee Management</h2>
           <p className="text-muted-foreground">Manage employee profiles and organizational structure</p>
         </div>
-        <Button>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add Employee
-        </Button>
+        <AddEmployeeDialog onEmployeeAdded={fetchEmployees} />
       </div>
 
       {/* Filters */}
@@ -252,13 +234,27 @@ export function EmployeeManagement() {
                     <TableCell>{employee.manager || '-'}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleViewEmployee(employee)}
+                          title="View Employee"
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditEmployee(employee)}
+                          title="Edit Employee"
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          title="More Actions"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </div>
@@ -277,6 +273,14 @@ export function EmployeeManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Employee Dialog */}
+      <EditEmployeeDialog
+        employee={editingEmployee}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onEmployeeUpdated={fetchEmployees}
+      />
     </div>
   )
 }

@@ -199,6 +199,87 @@ export async function GET(
   }
 }
 
+// PATCH /api/employees/[id] - Update employee (partial update)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!hasEmployeePermission(session.user.role, 'update')) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const validatedData = updateEmployeeSchema.parse(body);
+
+    // Check if employee exists
+    const existingEmployee = await prisma.employeeProfile.findUnique({
+      where: { id: params.id }
+    });
+
+    if (!existingEmployee) {
+      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+    }
+
+    // Prepare update data
+    const updateData: any = { ...validatedData };
+    if (validatedData.dateOfBirth) {
+      updateData.dateOfBirth = new Date(validatedData.dateOfBirth);
+    }
+
+    const employee = await prisma.employeeProfile.update({
+      where: { id: params.id },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            status: true,
+          }
+        },
+        supervisor: {
+          select: {
+            id: true,
+            fullName: true,
+            employeeId: true,
+          }
+        }
+      }
+    });
+
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: session.user.id,
+        action: 'UPDATE',
+        resource: 'employee',
+        resourceId: employee.id,
+        details: {
+          employeeId: employee.employeeId,
+          fullName: employee.fullName,
+          changes: validatedData,
+        }
+      }
+    });
+
+    return NextResponse.json(employee);
+
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 // PUT /api/employees/[id] - Update employee
 export async function PUT(
   request: NextRequest,
