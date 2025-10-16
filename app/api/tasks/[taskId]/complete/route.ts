@@ -8,7 +8,7 @@ import { validateUserSession } from "@/lib/auth/user-status";
 // POST /api/tasks/[id]/complete - Mark task as completed
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const session = await auth();
@@ -25,7 +25,7 @@ export async function POST(
       return NextResponse.json({ message: "Invalid session" }, { status: 401 });
     }
 
-    const { id: taskId } = await context.params;
+    const { taskId } = await context.params;
 
     const user = await prisma.user.findUnique({
       where: { email: session.user?.email || "" },
