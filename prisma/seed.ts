@@ -28,6 +28,65 @@ async function main() {
     }
   ];
 
+  // Staff users to create (these will be available for employee creation)
+  const staffUsers = [
+    {
+      email: 'sarah.therapist@rydmentalhealth.org',
+      firstName: 'Sarah',
+      lastName: 'Johnson',
+      name: 'Sarah Johnson',
+      password: 'staffpass123',
+      role: UserRole.STAFF,
+      jobTitle: 'Mental Health Therapist',
+      department: 'Therapy',
+      phone: '+256700123456'
+    },
+    {
+      email: 'michael.coordinator@rydmentalhealth.org',
+      firstName: 'Michael',
+      lastName: 'Ochieng',
+      name: 'Michael Ochieng',
+      password: 'staffpass123',
+      role: UserRole.STAFF,
+      jobTitle: 'Outreach Coordinator',
+      department: 'Outreach',
+      phone: '+256700234567'
+    },
+    {
+      email: 'grace.counselor@rydmentalhealth.org',
+      firstName: 'Grace',
+      lastName: 'Nakato',
+      name: 'Grace Nakato',
+      password: 'staffpass123',
+      role: UserRole.STAFF,
+      jobTitle: 'Youth Counselor',
+      department: 'Therapy',
+      phone: '+256700345678'
+    },
+    {
+      email: 'david.finance@rydmentalhealth.org',
+      firstName: 'David',
+      lastName: 'Mukasa',
+      name: 'David Mukasa',
+      password: 'staffpass123',
+      role: UserRole.STAFF,
+      jobTitle: 'Finance Officer',
+      department: 'Finance',
+      phone: '+256700456789'
+    },
+    {
+      email: 'mary.researcher@rydmentalhealth.org',
+      firstName: 'Mary',
+      lastName: 'Nambi',
+      name: 'Mary Nambi',
+      password: 'staffpass123',
+      role: UserRole.STAFF,
+      jobTitle: 'Research Assistant',
+      department: 'Research',
+      phone: '+256700567890'
+    }
+  ];
+
   // Create admin users
   for (const adminData of adminUsers) {
     // Check if admin already exists
@@ -58,6 +117,39 @@ async function main() {
       console.log(`✅ Created admin user: ${admin.email} (${admin.name})`);
     } else {
       console.log(`ℹ️  Admin user already exists: ${adminData.email}`);
+    }
+  }
+
+  // Create staff users (these will be available for employee creation)
+  for (const staffData of staffUsers) {
+    // Check if staff user already exists
+    const existingStaff = await prisma.user.findUnique({
+      where: { email: staffData.email },
+    });
+    
+    if (!existingStaff) {
+      // Create staff user
+      const staffPassword = await hashPassword(staffData.password);
+    
+      const staff = await prisma.user.create({
+        data: {
+          firstName: staffData.firstName,
+          lastName: staffData.lastName,
+          name: staffData.name,
+          email: staffData.email,
+          password: staffPassword,
+          role: staffData.role,
+          status: UserStatus.ACTIVE,
+          jobTitle: staffData.jobTitle,
+          department: staffData.department,
+          phone: staffData.phone,
+          weeklyHours: 40,
+        },
+      });
+      
+      console.log(`✅ Created staff user: ${staff.email} (${staff.name}) - Available for employee creation`);
+    } else {
+      console.log(`ℹ️  Staff user already exists: ${staffData.email}`);
     }
   }
 
