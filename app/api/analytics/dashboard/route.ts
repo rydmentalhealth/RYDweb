@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
     const daysBack = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : 365
     const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000)
 
-    // Check permissions
-    const canViewAnalytics = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.HR_OFFICER, UserRole.DIRECTOR, UserRole.TEAM_LEAD, UserRole.STAFF].includes(user.role)
+    // Check permissions - allow most roles to view analytics
+    const canViewAnalytics = ['SUPER_ADMIN', 'ADMIN', 'HR_OFFICER', 'DIRECTOR', 'TEAM_LEAD', 'STAFF'].includes(user.role)
     if (!canViewAnalytics) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
@@ -124,19 +124,17 @@ export async function GET(request: NextRequest) {
       }),
       
       
-      // Attendance data
-      prisma.checkIn.groupBy({
-        by: ['userId'],
+      // Attendance data (simplified to avoid complex joins)
+      prisma.checkIn.findMany({
         where: {
-          checkInTime: { gte: startDate },
-          ...(department && { user: { department } })
+          checkInTime: { gte: startDate }
         },
-        _count: {
-          id: true
-        },
-        _avg: {
+        select: {
+          id: true,
+          userId: true,
           workingHours: true
-        }
+        },
+        take: 100 // Limit to prevent timeout
       }),
       
       // Performance data (simplified - using tasks as KPI proxy)
@@ -154,7 +152,7 @@ export async function GET(request: NextRequest) {
     // Calculate metrics
     const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0
     const averageAttendance = attendanceData.length > 0 
-      ? attendanceData.reduce((sum, item) => sum + (item._avg.workingHours || 0), 0) / attendanceData.length 
+      ? attendanceData.reduce((sum: number, item: any) => sum + (item.workingHours || 0), 0) / attendanceData.length 
       : 0
 
     // Generate mock trend data based on actual counts

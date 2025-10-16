@@ -92,17 +92,64 @@ export function OrganizationIdGenerator() {
   const fetchEmployees = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/admin/users?status=ACTIVE&includeProfiles=true')
-      if (response.ok) {
-        const data = await response.json()
-        // Filter only employees (exclude pending users and include only staff/volunteers)
-        const activeEmployees = data.users?.filter((user: any) => 
+      
+      // First try to get from admin/users endpoint
+      const usersResponse = await fetch('/api/admin/users')
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json()
+        // Filter active employees only
+        const activeEmployees = usersData?.filter((user: any) => 
           user.status === 'ACTIVE' && 
-          ['STAFF', 'TEAM_LEAD', 'ADMIN', 'HR_OFFICER', 'VOLUNTEER'].includes(user.role)
+          ['STAFF', 'TEAM_LEAD', 'ADMIN', 'HR_OFFICER', 'VOLUNTEER', 'SUPER_ADMIN'].includes(user.role)
         ) || []
-        setEmployees(activeEmployees)
+        
+        // Transform to match expected format
+        const transformedEmployees = activeEmployees.map((user: any) => ({
+          id: user.id,
+          name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+          email: user.email,
+          role: user.role,
+          department: user.department || 'General',
+          status: user.status,
+          createdAt: user.createdAt,
+          avatar: user.avatar,
+          phoneNumber: user.phone,
+          employeeProfile: {
+            position: user.jobTitle || user.role?.replace('_', ' '),
+            department: user.department,
+            joinDate: user.createdAt
+          }
+        }))
+        
+        setEmployees(transformedEmployees)
       } else {
-        toast.error('Failed to fetch employee data')
+        // Fallback to employees endpoint
+        const employeesResponse = await fetch('/api/employees')
+        if (employeesResponse.ok) {
+          const employeesData = await employeesResponse.json()
+          const activeEmployees = employeesData.employees?.filter((emp: any) => 
+            emp.user?.status === 'ACTIVE'
+          ).map((emp: any) => ({
+            id: emp.user.id,
+            name: emp.fullName,
+            email: emp.user.email || emp.email,
+            role: emp.user.role,
+            department: emp.department || 'General',
+            status: emp.user.status,
+            createdAt: emp.user.createdAt,
+            avatar: emp.avatar,
+            phoneNumber: emp.phone,
+            employeeProfile: {
+              position: emp.designation || emp.user.role?.replace('_', ' '),
+              department: emp.department,
+              joinDate: emp.startDate || emp.user.createdAt
+            }
+          })) || []
+          
+          setEmployees(activeEmployees)
+        } else {
+          toast.error('Failed to fetch employee data from both endpoints')
+        }
       }
     } catch (error) {
       console.error('Error fetching employees:', error)
