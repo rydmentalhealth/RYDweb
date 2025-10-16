@@ -59,13 +59,15 @@ export function AddEmployeeDialog({ onEmployeeAdded }: AddEmployeeDialogProps) {
     try {
       const response = await fetch('/api/users/available-for-employee')
       if (!response.ok) {
-        throw new Error('Failed to fetch available users')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
       }
       const data = await response.json()
-      setAvailableUsers(data.users)
+      console.log('Available users data:', data) // Debug log
+      setAvailableUsers(data.users || [])
     } catch (error) {
       console.error('Error fetching available users:', error)
-      toast.error('Failed to load available users')
+      toast.error(`Failed to load available users: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -196,10 +198,26 @@ export function AddEmployeeDialog({ onEmployeeAdded }: AddEmployeeDialogProps) {
               {filteredUsers.length === 0 ? (
                 <Card>
                   <CardContent className="p-4 text-center text-muted-foreground">
-                    {availableUsers.length === 0 
-                      ? 'No active users available to add as employees'
-                      : 'No users match your search criteria'
-                    }
+                    {availableUsers.length === 0 ? (
+                      <div className="space-y-2">
+                        <p className="font-medium">No active users available to add as employees</p>
+                        <div className="text-xs text-left bg-gray-50 p-3 rounded">
+                          <p className="font-medium mb-1">Possible reasons:</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            <li>All active system users already have employee profiles</li>
+                            <li>No users have been approved (status = ACTIVE)</li>
+                            <li>Database connection issue</li>
+                          </ul>
+                          <p className="mt-2 font-medium">To fix this:</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            <li>Approve pending user registrations first</li>
+                            <li>Or create new system users via the System Users page</li>
+                          </ul>
+                        </div>
+                      </div>
+                    ) : (
+                      'No users match your search criteria'
+                    )}
                   </CardContent>
                 </Card>
               ) : (

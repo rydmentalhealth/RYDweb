@@ -1,9 +1,11 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { 
   Users, 
@@ -22,38 +24,53 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import Link from "next/link"
 
-// Mock data - replace with real API calls
-const kpiData = {
-  totalTeamMembers: 156,
-  volunteersActiveThisWeek: 42,
-  pendingOnboardings: 8,
-  tasksCompletedToday: 23,
-  departmentalUpdatesLogged: 5
+// Data interfaces
+interface KPIData {
+  totalTeamMembers: number
+  volunteersActiveThisWeek: number
+  pendingOnboardings: number
+  tasksCompletedToday: number
+  departmentalUpdatesLogged: number
 }
 
-const engagementData = [
-  { week: 'Week 1', engagement: 78, updates: 45 },
-  { week: 'Week 2', engagement: 82, updates: 52 },
-  { week: 'Week 3', engagement: 75, updates: 38 },
-  { week: 'Week 4', engagement: 88, updates: 61 }
-]
+interface EngagementData {
+  week: string
+  engagement: number
+  updates: number
+}
 
-const activityData = [
-  { day: 'Mon', attendance: 85, tasks: 12 },
-  { day: 'Tue', attendance: 92, tasks: 18 },
-  { day: 'Wed', attendance: 78, tasks: 15 },
-  { day: 'Thu', attendance: 88, tasks: 22 },
-  { day: 'Fri', attendance: 95, tasks: 28 },
-  { day: 'Sat', attendance: 45, tasks: 8 },
-  { day: 'Sun', attendance: 32, tasks: 5 }
-]
+interface ActivityData {
+  day: string
+  attendance: number
+  tasks: number
+}
 
-const alerts = [
-  { id: 1, type: 'missing_report', message: '3 team members missing weekly reports', urgent: true },
-  { id: 2, type: 'inactive', message: '5 volunteers inactive for 2+ weeks', urgent: false },
-  { id: 3, type: 'milestone', message: 'Youth Program milestone overdue', urgent: true },
-  { id: 4, type: 'onboarding', message: '8 pending onboarding approvals', urgent: false }
-]
+interface NotificationData {
+  id: number
+  type: string
+  message: string
+  urgent: boolean
+}
+
+interface AdminStats {
+  kpiData: KPIData
+  engagementData: EngagementData[]
+  activityData: ActivityData[]
+  notifications: NotificationData[]
+}
+// Default/fallback data
+const defaultStats: AdminStats = {
+  kpiData: {
+    totalTeamMembers: 0,
+    volunteersActiveThisWeek: 0,
+    pendingOnboardings: 0,
+    tasksCompletedToday: 0,
+    departmentalUpdatesLogged: 0
+  },
+  engagementData: [],
+  activityData: [],
+  notifications: []
+}
 
 const recentUpdates = [
   { 
@@ -83,6 +100,55 @@ const recentUpdates = [
 ]
 
 export function AdminDashboard() {
+  const [stats, setStats] = useState<AdminStats>(defaultStats)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchAdminStats()
+  }, [])
+
+  const fetchAdminStats = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/dashboard/admin-stats')
+      if (!response.ok) {
+        throw new Error('Failed to fetch admin stats')
+      }
+      const data = await response.json()
+      setStats(data)
+    } catch (error) {
+      console.error('Error fetching admin stats:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <AdminDashboardSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-muted-foreground">
+              <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+              <p>Failed to load dashboard data: {error}</p>
+              <Button onClick={fetchAdminStats} className="mt-4">
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const { kpiData, engagementData, activityData, notifications } = stats
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -358,6 +424,63 @@ export function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function AdminDashboardSkeleton() {
+  return (
+    <div className="space-y-8">
+      {/* Header Skeleton */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+
+      {/* KPI Cards Skeleton */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-4" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16 mb-2" />
+              <Skeleton className="h-3 w-32" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Charts Skeleton */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

@@ -1,10 +1,12 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { 
   Users, 
   FolderKanban, 
@@ -27,51 +29,118 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar } from 'recharts'
 import Link from "next/link"
 
-// Mock data - replace with real API calls
-const kpiData = {
-  totalPeople: 247,
-  activeProjects: 12,
-  totalVolunteers: 89,
-  totalDepartments: 8,
-  monthlyExpenses: 45000000, // UGX
-  pendingApprovals: 6
+// Data interfaces
+interface KPIData {
+  totalPeople: number
+  activeProjects: number
+  totalVolunteers: number
+  totalDepartments: number
+  monthlyExpenses: number
+  pendingApprovals: number
 }
 
-const usersByRoleData = [
-  { name: 'Super Admin', value: 2, color: '#0B874E' },
-  { name: 'Admin', value: 8, color: '#16A34A' },
-  { name: 'Team Lead', value: 15, color: '#22C55E' },
-  { name: 'Staff', value: 67, color: '#4ADE80' },
-  { name: 'Volunteer', value: 155, color: '#86EFAC' }
-]
+interface UsersByRoleData {
+  name: string
+  value: number
+  color: string
+}
 
-const monthlyActivityData = [
-  { month: 'Jan', projects: 8, tasks: 45, reports: 12 },
-  { month: 'Feb', projects: 10, tasks: 52, reports: 15 },
-  { month: 'Mar', projects: 12, tasks: 68, reports: 18 },
-  { month: 'Apr', projects: 11, tasks: 71, reports: 16 },
-  { month: 'May', projects: 13, tasks: 78, reports: 20 },
-  { month: 'Jun', projects: 12, tasks: 82, reports: 22 }
-]
+interface MonthlyActivityData {
+  month: string
+  projects: number
+  tasks: number
+  reports: number
+}
 
-const topDepartments = [
-  { name: 'Mental Health Services', score: 95, projects: 4, reports: 12 },
-  { name: 'Community Outreach', score: 88, projects: 3, reports: 8 },
-  { name: 'Youth Programs', score: 82, projects: 2, reports: 6 },
-  { name: 'Refugee Support', score: 79, projects: 2, reports: 5 },
-  { name: 'Disability Services', score: 75, projects: 1, reports: 4 }
-]
+interface DepartmentPerformanceData {
+  name: string
+  score: number
+  projects: number
+  reports: number
+}
 
-const notifications = [
-  { id: 1, type: 'approval', message: '3 expense reports pending approval', time: '2 hours ago', urgent: true },
-  { id: 2, type: 'contract', message: '2 volunteer contracts expiring this month', time: '1 day ago', urgent: false },
-  { id: 3, type: 'report', message: 'Monthly HR report incomplete', time: '2 days ago', urgent: true },
-  { id: 4, type: 'system', message: 'System backup completed successfully', time: '3 days ago', urgent: false }
-]
+interface NotificationData {
+  id: number
+  type: string
+  message: string
+  time: string
+  urgent: boolean
+}
+
+interface SuperAdminStats {
+  kpiData: KPIData
+  usersByRoleData: UsersByRoleData[]
+  monthlyActivityData: MonthlyActivityData[]
+  topDepartments: DepartmentPerformanceData[]
+  notifications: NotificationData[]
+}
+// Default/fallback data
+const defaultStats: SuperAdminStats = {
+  kpiData: {
+    totalPeople: 0,
+    activeProjects: 0,
+    totalVolunteers: 0,
+    totalDepartments: 0,
+    monthlyExpenses: 0,
+    pendingApprovals: 0
+  },
+  usersByRoleData: [],
+  monthlyActivityData: [],
+  topDepartments: [],
+  notifications: []
+}
 
 const systemHealthScore = 87 // AI-based system health percentage
 
 export function SuperAdminDashboard() {
+  const [stats, setStats] = useState<SuperAdminStats>(defaultStats)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchSuperAdminStats()
+  }, [])
+
+  const fetchSuperAdminStats = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/dashboard/super-admin-stats')
+      if (!response.ok) {
+        throw new Error('Failed to fetch super admin stats')
+      }
+      const data = await response.json()
+      setStats(data)
+    } catch (error) {
+      console.error('Error fetching super admin stats:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <SuperAdminDashboardSkeleton />
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-muted-foreground">
+              <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+              <p>Failed to load dashboard data: {error}</p>
+              <Button onClick={fetchSuperAdminStats} className="mt-4">
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const { kpiData, usersByRoleData, monthlyActivityData, topDepartments, notifications } = stats
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-UG', {
       style: 'currency',
@@ -408,6 +477,51 @@ export function SuperAdminDashboard() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function SuperAdminDashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* KPI Cards Skeleton */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-4" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16 mb-2" />
+              <Skeleton className="h-3 w-32" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Charts Skeleton */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
