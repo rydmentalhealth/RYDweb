@@ -772,6 +772,12 @@ export function VolunteerDashboard() {
                 <Video className="h-4 w-4 mr-2" />
                 Join RYD Meeting
               </Button>
+              <Link href="/dashboard/chat">
+                <Button variant="outline" className="w-full">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Open Chat
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

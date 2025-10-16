@@ -838,6 +838,12 @@ export function StaffDashboard() {
                   Check In/Out
                 </Button>
               </Link>
+              <Link href="/dashboard/chat">
+                <Button variant="outline" className="w-full justify-start">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Open Chat
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

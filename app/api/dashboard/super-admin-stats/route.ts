@@ -15,7 +15,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isSuperAdmin(session.user.role)) {
+    // Get user from database to check role
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true, status: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    if (!isSuperAdmin(user.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
@@ -55,10 +65,13 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where: { role: 'VOLUNTEER', status: 'ACTIVE' } }),
       prisma.user.count({ where: { status: 'PENDING' } }),
       
-      // Department count (unique departments from employee profiles)
-      prisma.employeeProfile.findMany({
+      // Department count (unique departments from users)
+      prisma.user.findMany({
         select: { department: true },
-        where: { department: { not: null } },
+        where: { 
+          department: { not: null },
+          status: 'ACTIVE'
+        },
         distinct: ['department']
       }).then(depts => depts.length),
       
@@ -90,7 +103,7 @@ export async function GET(request: NextRequest) {
       }),
       
       // Department performance (projects and reports by department)
-      prisma.employeeProfile.groupBy({
+      prisma.user.groupBy({
         by: ['department'],
         _count: { id: true },
         where: { 
@@ -154,12 +167,10 @@ export async function GET(request: NextRequest) {
           // Count projects where team members are from this department
           prisma.project.count({
             where: {
-              members: {
+              team: {
                 some: {
                   user: {
-                    employeeProfile: {
-                      department: dept.department
-                    }
+                    department: dept.department
                   }
                 }
               }
