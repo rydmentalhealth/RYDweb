@@ -19,121 +19,243 @@ import {
   Award,
   TrendingUp,
   Target,
-  Plus
+  Plus,
+  Send,
+  Save,
+  Loader2,
+  Settings
 } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import Link from "next/link"
+import { toast } from "sonner"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { format } from "date-fns"
 
-// Mock data - replace with real API calls
-const kpiData = {
-  activeAssignments: 2,
-  hoursLoggedThisWeek: 12,
-  pendingTasks: 4,
-  teamLeadFeedback: 'Excellent'
+// Interfaces for type safety
+interface VolunteerStats {
+  activeAssignments: number
+  hoursLoggedThisWeek: number
+  pendingTasks: number
+  teamLeadFeedback: string
+  totalTasksCompleted: number
+  totalHoursServed: number
+  communitiesReached: number
+  monthsActive: number
+  weeklyHours: number
+  tasksDueThisWeek: number
 }
 
-const weeklyHoursData = [
-  { week: 'Week 1', hours: 8, target: 10 },
-  { week: 'Week 2', hours: 12, target: 10 },
-  { week: 'Week 3', hours: 6, target: 10 },
-  { week: 'Week 4', hours: 14, target: 10 }
-]
-
-const tasksByStatus = [
-  { name: 'To Do', value: 4, color: '#94A3B8' },
-  { name: 'In Progress', value: 2, color: '#0B874E' },
-  { name: 'Done', value: 8, color: '#16A34A' }
-]
-
-const myTasks = [
-  {
-    id: 1,
-    title: 'Assist with youth group session',
-    assignment: 'Youth Programs',
-    status: 'todo',
-    due: 'Tomorrow',
-    description: 'Help facilitate discussion and activities for 15-20 youth participants'
-  },
-  {
-    id: 2,
-    title: 'Update community contact database',
-    assignment: 'Community Outreach',
-    status: 'in_progress',
-    due: '3 days',
-    description: 'Add new contact information from recent outreach events'
-  },
-  {
-    id: 3,
-    title: 'Prepare welcome materials for new volunteers',
-    assignment: 'Volunteer Coordination',
-    status: 'todo',
-    due: '1 week',
-    description: 'Create welcome packets and orientation materials'
+interface Task {
+  id: string
+  title: string
+  description?: string
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE'
+  endDate?: string
+  project?: {
+    name: string
   }
-]
-
-const announcements = [
-  {
-    id: 1,
-    title: 'Monthly Volunteer Appreciation Event',
-    content: 'Join us this Friday at 6 PM for our monthly appreciation gathering. Food and refreshments will be provided!',
-    date: '2 days ago',
-    priority: 'high'
-  },
-  {
-    id: 2,
-    title: 'New Mental Health Training Available',
-    content: 'We\'re offering a free mental health first aid training next month. Limited spots available - register early!',
-    date: '1 week ago',
-    priority: 'medium'
-  },
-  {
-    id: 3,
-    title: 'RYD Community Outreach Success',
-    content: 'Thanks to all volunteers who participated in last week\'s community event. We reached over 200 community members!',
-    date: '2 weeks ago',
-    priority: 'low'
-  }
-]
-
-const impactStats = {
-  totalTasksCompleted: 47,
-  totalHoursServed: 156,
-  communitiesReached: 8,
-  monthsActive: 6
 }
 
-const upcomingEvents = [
-  {
-    id: 1,
-    title: 'Team Building Workshop',
-    date: 'This Friday, 2:00 PM',
-    location: 'RYD Main Office',
-    type: 'workshop'
-  },
-  {
-    id: 2,
-    title: 'Community Health Fair',
-    date: 'Next Monday, 9:00 AM',
-    location: 'Nakawa Community Center',
-    type: 'outreach'
-  },
-  {
-    id: 3,
-    title: 'Monthly Volunteer Meeting',
-    date: 'Next Wednesday, 6:00 PM',
-    location: 'Virtual (Zoom)',
-    type: 'meeting'
+interface Event {
+  id: string
+  title: string
+  description?: string
+  date: string
+  type: string
+}
+
+interface Announcement {
+  id: string
+  title: string
+  content: string
+  type: string
+  priority: string
+  createdAt: string
+  author: {
+    name: string
+    role: string
   }
-]
+}
 
 export function VolunteerDashboard() {
+  const { data: session } = useSession()
+  const [isDailyUpdateDialogOpen, setIsDailyUpdateDialogOpen] = useState(false)
+  const [submittingUpdate, setSubmittingUpdate] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<VolunteerStats>({
+    activeAssignments: 0,
+    hoursLoggedThisWeek: 0,
+    pendingTasks: 0,
+    teamLeadFeedback: 'Pending',
+    totalTasksCompleted: 0,
+    totalHoursServed: 0,
+    communitiesReached: 0,
+    monthsActive: 0,
+    weeklyHours: 0,
+    tasksDueThisWeek: 0
+  })
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [events, setEvents] = useState<Event[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [dailyUpdate, setDailyUpdate] = useState({
+    date: format(new Date(), 'yyyy-MM-dd'),
+    description: '',
+    hoursSpent: 0,
+    isApproved: false,
+    submittedToHR: false,
+    id: undefined as string | undefined
+  })
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchDashboardData()
+    }
+  }, [session?.user?.id])
+
+  const fetchDashboardData = async () => {
+    try {
+      const [statsRes, tasksRes, eventsRes, announcementsRes] = await Promise.all([
+        fetch('/api/dashboard/volunteer-stats'),
+        fetch('/api/tasks?assigned=true&limit=10'),
+        fetch('/api/events?upcoming=true&limit=5'),
+        fetch('/api/communication/announcements?limit=5')
+      ])
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json()
+        setStats(statsData)
+      }
+
+      if (tasksRes.ok) {
+        const tasksData = await tasksRes.json()
+        setTasks(tasksData.tasks || [])
+      }
+
+      if (eventsRes.ok) {
+        const eventsData = await eventsRes.json()
+        setEvents(eventsData.events || [])
+      }
+
+      if (announcementsRes.ok) {
+        const announcementsData = await announcementsRes.json()
+        setAnnouncements(announcementsData.announcements || [])
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+      toast.error('Failed to load dashboard data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-600 text-white'
       case 'in_progress': return 'bg-[#0B874E] text-white'
       case 'todo': return 'bg-gray-200 text-gray-800'
       default: return 'bg-gray-200 text-gray-800'
+    }
+  }
+
+  const handleDailyUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmittingUpdate(true)
+
+    try {
+      const method = dailyUpdate.id ? 'PUT' : 'POST'
+      const url = dailyUpdate.id 
+        ? `/api/attendance/daily-logs/${dailyUpdate.id}`
+        : '/api/attendance/daily-logs'
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: dailyUpdate.date,
+          description: dailyUpdate.description,
+          hoursSpent: dailyUpdate.hoursSpent,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to submit daily update')
+      }
+
+      const result = await response.json()
+      
+      setDailyUpdate(prev => ({
+        ...prev,
+        id: result.id,
+        isApproved: result.isApproved,
+        submittedToHR: false
+      }))
+
+      toast.success('Daily update saved successfully! 📝')
+      setIsDailyUpdateDialogOpen(false)
+    } catch (error) {
+      toast.error('Failed to submit daily update')
+    } finally {
+      setSubmittingUpdate(false)
+    }
+  }
+
+  const handleSubmitToHR = async () => {
+    if (!dailyUpdate.id) {
+      toast.error('Please save your daily update first')
+      return
+    }
+
+    setSubmittingUpdate(true)
+
+    try {
+      const response = await fetch(`/api/attendance/daily-logs/${dailyUpdate.id}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to submit to HR')
+      }
+
+      setDailyUpdate(prev => ({
+        ...prev,
+        submittedToHR: true,
+      }))
+
+      toast.success('Daily update submitted to HR successfully! 🚀')
+      setIsDailyUpdateDialogOpen(false)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to submit to HR')
+    } finally {
+      setSubmittingUpdate(false)
+    }
+  }
+
+  const handleTaskComplete = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to complete task')
+      }
+
+      const result = await response.json()
+      toast.success(result.message || 'Task marked as completed! ✅')
+      fetchDashboardData()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to complete task')
     }
   }
 
@@ -146,6 +268,27 @@ export function VolunteerDashboard() {
     }
   }
 
+  const weeklyHoursData = [
+    { week: 'Week 1', hours: Math.max(0, stats.weeklyHours - 6), target: 10 },
+    { week: 'Week 2', hours: Math.max(0, stats.weeklyHours - 4), target: 10 },
+    { week: 'Week 3', hours: Math.max(0, stats.weeklyHours - 2), target: 10 },
+    { week: 'Week 4', hours: stats.weeklyHours, target: 10 }
+  ]
+
+  const tasksByStatus = [
+    { name: 'To Do', value: Math.max(0, stats.pendingTasks - tasks.filter(t => t.status === 'IN_PROGRESS').length), color: '#94A3B8' },
+    { name: 'In Progress', value: tasks.filter(t => t.status === 'IN_PROGRESS').length, color: '#0B874E' },
+    { name: 'Done', value: stats.totalTasksCompleted, color: '#16A34A' }
+  ]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -155,14 +298,124 @@ export function VolunteerDashboard() {
           <p className="text-muted-foreground">Stay connected, informed, and make a meaningful impact with RYD</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <FileText className="h-4 w-4 mr-2" />
-            Submit Update
-          </Button>
+          <Dialog open={isDailyUpdateDialogOpen} onOpenChange={setIsDailyUpdateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4 mr-2" />
+                Daily Update
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Daily Update</DialogTitle>
+                <DialogDescription>
+                  Log your volunteer activities and hours for today. Once submitted to HR, it cannot be edited.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleDailyUpdateSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={dailyUpdate.date}
+                    onChange={(e) => setDailyUpdate({ ...dailyUpdate, date: e.target.value })}
+                    disabled={dailyUpdate.submittedToHR}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Activities & Achievements</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe your volunteer activities today, tasks completed, people helped, and impact made..."
+                    value={dailyUpdate.description}
+                    onChange={(e) => setDailyUpdate({ ...dailyUpdate, description: e.target.value })}
+                    disabled={dailyUpdate.submittedToHR}
+                    rows={4}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hours">Hours Volunteered</Label>
+                  <Input
+                    id="hours"
+                    type="number"
+                    step="0.5"
+                    placeholder="e.g. 4"
+                    value={dailyUpdate.hoursSpent || ''}
+                    onChange={(e) => setDailyUpdate({ ...dailyUpdate, hoursSpent: parseFloat(e.target.value) || 0 })}
+                    disabled={dailyUpdate.submittedToHR}
+                  />
+                </div>
+                {dailyUpdate.submittedToHR && (
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      This update has been submitted to HR and is now read-only.
+                      {dailyUpdate.isApproved && ' It has been approved.'}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDailyUpdateDialogOpen(false)}
+                  >
+                    {dailyUpdate.submittedToHR ? 'Close' : 'Cancel'}
+                  </Button>
+                  {!dailyUpdate.submittedToHR && (
+                    <>
+                      <Button type="submit" disabled={submittingUpdate} variant="outline">
+                        {submittingUpdate ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            {dailyUpdate.id ? 'Save Changes' : 'Save Draft'}
+                          </>
+                        )}
+                      </Button>
+                      {dailyUpdate.id && (
+                        <Button 
+                          type="button" 
+                          onClick={handleSubmitToHR}
+                          disabled={submittingUpdate}
+                          className="bg-[#0B874E] hover:bg-[#0B874E]/90"
+                        >
+                          {submittingUpdate ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="mr-2 h-4 w-4" />
+                              Submit to HR
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
           <Button size="sm" className="bg-[#0B874E] hover:bg-[#0B874E]/90">
             <Phone className="h-4 w-4 mr-2" />
             Contact HR
           </Button>
+          <Link href="/dashboard/settings">
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -174,7 +427,7 @@ export function VolunteerDashboard() {
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.activeAssignments}</div>
+            <div className="text-2xl font-bold">{stats.activeAssignments}</div>
             <p className="text-xs text-muted-foreground">Current projects</p>
           </CardContent>
         </Card>
@@ -185,9 +438,9 @@ export function VolunteerDashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.hoursLoggedThisWeek}</div>
+            <div className="text-2xl font-bold">{stats.hoursLoggedThisWeek}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+2</span> from last week
+              {stats.hoursLoggedThisWeek > 0 ? 'Great work!' : 'Log your hours'}
             </p>
           </CardContent>
         </Card>
@@ -198,7 +451,7 @@ export function VolunteerDashboard() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.pendingTasks}</div>
+            <div className="text-2xl font-bold">{stats.pendingTasks}</div>
             <p className="text-xs text-muted-foreground">Need attention</p>
           </CardContent>
         </Card>
@@ -209,7 +462,7 @@ export function VolunteerDashboard() {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.teamLeadFeedback}</div>
+            <div className="text-2xl font-bold">{stats.teamLeadFeedback}</div>
             <p className="text-xs text-muted-foreground">Latest rating</p>
           </CardContent>
         </Card>
@@ -227,19 +480,19 @@ export function VolunteerDashboard() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#0B874E]">{impactStats.totalTasksCompleted}</div>
+              <div className="text-3xl font-bold text-[#0B874E]">{stats.totalTasksCompleted}</div>
               <div className="text-sm text-muted-foreground">Tasks Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#0B874E]">{impactStats.totalHoursServed}</div>
+              <div className="text-3xl font-bold text-[#0B874E]">{stats.totalHoursServed}</div>
               <div className="text-sm text-muted-foreground">Hours Served</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#0B874E]">{impactStats.communitiesReached}</div>
+              <div className="text-3xl font-bold text-[#0B874E]">{stats.communitiesReached}</div>
               <div className="text-sm text-muted-foreground">Communities Reached</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-[#0B874E]">{impactStats.monthsActive}</div>
+              <div className="text-3xl font-bold text-[#0B874E]">{stats.monthsActive}</div>
               <div className="text-sm text-muted-foreground">Months Active</div>
             </div>
           </div>
@@ -282,28 +535,45 @@ export function VolunteerDashboard() {
               </div>
 
               {/* Current Tasks */}
-              {myTasks.map((task) => (
-                <div key={task.id} className="p-3 rounded-lg border">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">{task.description}</p>
-                    </div>
-                    <Badge className={getStatusColor(task.status)}>
-                      {task.status.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-xs">{task.assignment}</Badge>
-                    <span className="text-xs text-muted-foreground">Due: {task.due}</span>
-                  </div>
-                  {task.status !== 'completed' && (
-                    <Button size="sm" variant="outline" className="w-full mt-2">
-                      Mark as Complete
-                    </Button>
-                  )}
+              {tasks.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No tasks assigned</p>
+                  <p className="text-sm">Check back later for new volunteer opportunities</p>
                 </div>
-              ))}
+              ) : (
+                tasks.slice(0, 3).map((task) => (
+                  <div key={task.id} className="p-3 rounded-lg border">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{task.title}</p>
+                        <p className="text-xs text-muted-foreground">{task.description}</p>
+                      </div>
+                      <Badge className={getStatusColor(task.status.toLowerCase())}>
+                        {task.status.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary" className="text-xs">{task.project?.name || 'General'}</Badge>
+                      {task.endDate && (
+                        <span className="text-xs text-muted-foreground">
+                          Due: {format(new Date(task.endDate), 'MMM d')}
+                        </span>
+                      )}
+                    </div>
+                    {task.status !== 'COMPLETED' && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="w-full mt-2"
+                        onClick={() => handleTaskComplete(task.id)}
+                      >
+                        Mark as Complete
+                      </Button>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -350,15 +620,33 @@ export function VolunteerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {announcements.map((announcement) => (
-                <div key={announcement.id} className={`p-4 rounded-lg border-l-4 ${getPriorityColor(announcement.priority)}`}>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h4 className="font-medium text-sm">{announcement.title}</h4>
-                    <span className="text-xs text-muted-foreground">{announcement.date}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{announcement.content}</p>
+              {announcements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No announcements currently</p>
+                  <p className="text-sm">Stay tuned for updates from management!</p>
+                  <p className="text-xs mt-2 text-muted-foreground/70">
+                    Only HR, Admin, Team Leads, and Super Admin can create announcements
+                  </p>
                 </div>
-              ))}
+              ) : (
+                announcements.map((announcement) => (
+                  <div key={announcement.id} className={`p-4 rounded-lg border-l-4 ${getPriorityColor(announcement.priority)}`}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h4 className="font-medium text-sm">{announcement.title}</h4>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(announcement.createdAt), 'MMM d')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{announcement.content}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs text-muted-foreground">
+                        By {announcement.author.name} • {announcement.author.role}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -374,17 +662,32 @@ export function VolunteerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {upcomingEvents.map((event) => (
-                <div key={event.id} className="flex items-start gap-3 p-3 rounded-lg border">
-                  <div className="w-2 h-2 bg-[#0B874E] rounded-full mt-2" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{event.title}</p>
-                    <p className="text-xs text-muted-foreground">{event.date}</p>
-                    <p className="text-xs text-muted-foreground">{event.location}</p>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">{event.type}</Badge>
+              {events.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No events currently scheduled</p>
+                  <p className="text-sm">Stay tuned for updates from HR and management!</p>
+                  <p className="text-xs mt-2 text-muted-foreground/70">
+                    Only HR, Admin, and Super Admin can create events
+                  </p>
                 </div>
-              ))}
+              ) : (
+                events.map((event) => (
+                  <div key={event.id} className="flex items-start gap-3 p-3 rounded-lg border">
+                    <div className="w-2 h-2 bg-[#0B874E] rounded-full mt-2" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{event.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(event.date), 'MMM d, yyyy')}
+                      </p>
+                      {event.description && (
+                        <p className="text-xs text-muted-foreground">{event.description}</p>
+                      )}
+                    </div>
+                    <Badge variant="secondary" className="text-xs">{event.type}</Badge>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -444,7 +747,10 @@ export function VolunteerDashboard() {
             <CardDescription>Log your activities and hours</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full bg-[#0B874E] hover:bg-[#0B874E]/90">
+            <Button 
+              className="w-full bg-[#0B874E] hover:bg-[#0B874E]/90"
+              onClick={() => setIsDailyUpdateDialogOpen(true)}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Submit Daily Update
             </Button>
@@ -476,7 +782,26 @@ export function VolunteerDashboard() {
             <CardDescription>Connect with your team</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full">
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={async () => {
+                try {
+                  // Get or create department channel
+                  const response = await fetch('/api/communication/channels/department')
+                  if (response.ok) {
+                    const data = await response.json()
+                    // Redirect to communication page with the department channel selected
+                    window.location.href = `/dashboard/communication?channel=${data.channel.id}&tab=chat`
+                  } else {
+                    const error = await response.json()
+                    toast.error(error.error || 'Failed to access department chat')
+                  }
+                } catch (error) {
+                  toast.error('Failed to access department chat')
+                }
+              }}
+            >
               <Users className="h-4 w-4 mr-2" />
               View Department Chat
             </Button>
