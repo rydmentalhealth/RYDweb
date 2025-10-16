@@ -123,6 +123,17 @@ model User {
   rewards         UserReward[]
   rewardsGranted  UserReward[] @relation("RewardGranter")
 
+  // Security & Compliance relations
+  auditLogs              AuditLog[]              @relation("AuditLogUser")
+  securitySessions       SecuritySession[]       @relation("SecuritySession")
+  rolePermissions        RolePermission[]        @relation("PermissionGranter")
+  backupsCreated         SystemBackup[]          @relation("BackupCreator")
+  dataPrivacyRequests    DataPrivacyRequest[]    @relation("DataPrivacyRequest")
+  privacyRequestsProcessed DataPrivacyRequest[]  @relation("PrivacyRequestProcessor")
+  reportTemplatesCreated ReportTemplate[]        @relation("ReportTemplateCreator")
+  reportsGenerated2      GeneratedReport[]       @relation("ReportGenerator")
+  dashboardConfigs       DashboardConfig[]       @relation("DashboardConfig")
+
   // Audit fields
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -1292,3 +1303,319 @@ model WelcomeNote {
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
 }
+
+// Enhanced Security & Compliance Models
+
+// Comprehensive Audit Trail System
+model AuditLog {
+  id            String      @id @default(cuid())
+  userId        String?
+  user          User?       @relation("AuditLogUser", fields: [userId], references: [id])
+  sessionId     String?
+  action        AuditAction
+  resource      String      // Table/entity affected
+  resourceId    String?     // ID of affected record
+  oldValues     Json?       // Previous values (for updates)
+  newValues     Json?       // New values (for creates/updates)
+  ipAddress     String?
+  userAgent     String?
+  location      String?     // Geolocation if available
+  deviceInfo    Json?       // Device fingerprint
+  riskLevel     RiskLevel   @default(LOW)
+  status        AuditStatus @default(SUCCESS)
+  errorMessage  String?
+  metadata      Json?       // Additional context
+  createdAt     DateTime    @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([resource, resourceId])
+  @@index([riskLevel, createdAt])
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  EXPORT
+  IMPORT
+  APPROVE
+  REJECT
+  ASSIGN
+  UNASSIGN
+  UPLOAD
+  DOWNLOAD
+  BACKUP
+  RESTORE
+  PERMISSION_CHANGE
+  ROLE_CHANGE
+  PASSWORD_CHANGE
+  EMAIL_CHANGE
+  SYSTEM_CONFIG
+  DATA_EXPORT
+  BULK_OPERATION
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILED
+  BLOCKED
+  SUSPICIOUS
+}
+
+// Security Sessions Management
+model SecuritySession {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation("SecuritySession", fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken  String    @unique
+  ipAddress     String?
+  userAgent     String?
+  location      String?
+  deviceInfo    Json?
+  isActive      Boolean   @default(true)
+  lastActivity  DateTime  @default(now())
+  expiresAt     DateTime
+  terminatedAt  DateTime?
+  terminatedBy  String?   // User ID who terminated the session
+  createdAt     DateTime  @default(now())
+
+  @@index([userId, isActive])
+  @@index([sessionToken])
+  @@index([expiresAt])
+}
+
+// Role-Based Access Control (RBAC)
+model Permission {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  category    String // e.g., "USER_MANAGEMENT", "FINANCE", "REPORTS"
+  resource    String // e.g., "users", "expenses", "reports"
+  action      String // e.g., "create", "read", "update", "delete"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  role         UserRole   // Reference to enum
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  granted      Boolean    @default(true)
+  grantedById  String?
+  grantedBy    User?      @relation("PermissionGranter", fields: [grantedById], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+}
+
+// Data Encryption Registry
+model EncryptedData {
+  id          String           @id @default(cuid())
+  tableName   String
+  recordId    String
+  fieldName   String
+  encryptedValue String        @db.Text
+  algorithm   EncryptionAlgo   @default(AES_256)
+  keyVersion  Int              @default(1)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([tableName, recordId, fieldName])
+  @@index([tableName, recordId])
+}
+
+enum EncryptionAlgo {
+  AES_256
+  RSA_2048
+  BCRYPT
+}
+
+// System Backup Management
+model SystemBackup {
+  id            String       @id @default(cuid())
+  backupType    BackupType
+  fileName      String
+  fileUrl       String
+  fileSize      BigInt
+  checksum      String       // File integrity verification
+  status        BackupStatus @default(IN_PROGRESS)
+  startedAt     DateTime     @default(now())
+  completedAt   DateTime?
+  errorMessage  String?
+  retentionDate DateTime     // When backup can be deleted
+  metadata      Json?        // Additional backup info
+  createdById   String?
+  createdBy     User?        @relation("BackupCreator", fields: [createdById], references: [id])
+
+  @@index([backupType, status])
+  @@index([startedAt])
+}
+
+enum BackupType {
+  FULL_DATABASE
+  INCREMENTAL
+  USER_DATA
+  DOCUMENTS
+  SYSTEM_CONFIG
+  MANUAL
+}
+
+enum BackupStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CORRUPTED
+  EXPIRED
+}
+
+// GDPR Compliance & Data Privacy
+model DataPrivacyRequest {
+  id            String              @id @default(cuid())
+  userId        String
+  user          User                @relation("DataPrivacyRequest", fields: [userId], references: [id])
+  requestType   PrivacyRequestType
+  status        PrivacyRequestStatus @default(PENDING)
+  description   String?
+  requestedData Json?               // Specific data requested
+  processedData Json?               // Data provided/deleted
+  processedById String?
+  processedBy   User?               @relation("PrivacyRequestProcessor", fields: [processedById], references: [id])
+  processedAt   DateTime?
+  expiresAt     DateTime?           // For data deletion requests
+  notes         String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([userId, status])
+  @@index([requestType, status])
+}
+
+enum PrivacyRequestType {
+  DATA_EXPORT     // Right to data portability
+  DATA_DELETION   // Right to be forgotten
+  DATA_CORRECTION // Right to rectification
+  ACCESS_LOG      // Right to access
+  CONSENT_WITHDRAWAL
+}
+
+enum PrivacyRequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+  EXPIRED
+}
+
+// Advanced Analytics & Reporting Models
+
+// Report Templates
+model ReportTemplate {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  category    ReportCategory
+  template    Json         // Report structure/configuration
+  parameters  Json?        // Default parameters
+  schedule    Json?        // Auto-generation schedule
+  isActive    Boolean      @default(true)
+  createdById String
+  createdBy   User         @relation("ReportTemplateCreator", fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  generatedReports GeneratedReport[]
+}
+
+enum ReportCategory {
+  HR_ANALYTICS
+  FINANCIAL
+  PROJECT_PERFORMANCE
+  ATTENDANCE
+  COMPLIANCE
+  CUSTOM
+}
+
+// Generated Reports
+model GeneratedReport {
+  id           String         @id @default(cuid())
+  templateId   String?
+  template     ReportTemplate? @relation(fields: [templateId], references: [id])
+  title        String
+  description  String?
+  reportData   Json           // Generated report data
+  fileUrl      String?        // PDF/Excel file URL
+  parameters   Json?          // Parameters used for generation
+  generatedById String
+  generatedBy  User           @relation("ReportGenerator", fields: [generatedById], references: [id])
+  generatedAt  DateTime       @default(now())
+  expiresAt    DateTime?      // Auto-deletion date
+  downloadCount Int           @default(0)
+  isPublic     Boolean        @default(false)
+
+  @@index([templateId, generatedAt])
+  @@index([generatedById, generatedAt])
+}
+
+// Analytics Dashboard Configuration
+model DashboardConfig {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("DashboardConfig", fields: [userId], references: [id], onDelete: Cascade)
+  dashboardType String // "ADMIN", "HR", "TEAM_LEAD", etc.
+  widgets     Json     // Widget configuration
+  layout      Json     // Dashboard layout
+  filters     Json?    // Default filters
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, dashboardType])
+}
+
+// System Health Monitoring
+model SystemHealth {
+  id            String           @id @default(cuid())
+  component     String           // "DATABASE", "API", "STORAGE", etc.
+  status        HealthStatus
+  responseTime  Float?           // in milliseconds
+  errorRate     Float?           // percentage
+  uptime        Float?           // percentage
+  details       Json?            // Additional health details
+  alertLevel    AlertLevel       @default(INFO)
+  checkedAt     DateTime         @default(now())
+
+  @@index([component, checkedAt])
+  @@index([status, alertLevel])
+}
+
+enum HealthStatus {
+  HEALTHY
+  WARNING
+  CRITICAL
+  DOWN
+}
+
+enum AlertLevel {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
