@@ -67,6 +67,8 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get("projectId");
     const status = searchParams.get("status");
     const priority = searchParams.get("priority");
+    const assigned = searchParams.get("assigned") === "true";
+    const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined;
     
     // Build the query filters
     const filters: any = {};
@@ -99,49 +101,71 @@ export async function GET(request: NextRequest) {
       filters.priority = priority;
     }
 
-    // For volunteers and regular users, limit to tasks they're involved in
-    // For admins and staff, show all tasks or apply additional filtering
-    const canViewAllTasks = hasPermission(user.role, 'VIEW_ALL_TASKS');
-    
-    if (!canViewAllTasks) {
-      // User can only see tasks they created, are assigned to, or are part of assigned teams
-      const userTaskFilters = {
-        OR: [
-          { createdById: user.id },
-          { 
-            assignees: {
-              some: {
-                userId: user.id
+    // Handle the 'assigned' parameter - show only tasks assigned to current user
+    if (assigned) {
+      const assignedTaskFilters = {
+        assignees: {
+          some: {
+            userId: user.id
+          }
+        }
+      };
+      
+      // Combine with existing filters
+      if (Object.keys(filters).length > 0) {
+        filters.AND = [assignedTaskFilters, { ...filters }];
+        // Remove the assignees filter we just moved to AND if it exists
+        if (filters.assignees) {
+          delete filters.assignees;
+        }
+      } else {
+        Object.assign(filters, assignedTaskFilters);
+      }
+    } else {
+      // For volunteers and regular users, limit to tasks they're involved in
+      // For admins and staff, show all tasks or apply additional filtering
+      const canViewAllTasks = hasPermission(user.role, 'VIEW_ALL_TASKS');
+      
+      if (!canViewAllTasks) {
+        // User can only see tasks they created, are assigned to, or are part of assigned teams
+        const userTaskFilters = {
+          OR: [
+            { createdById: user.id },
+            { 
+              assignees: {
+                some: {
+                  userId: user.id
+                }
               }
-            }
-          },
-          {
-            teams: {
-              some: {
-                team: {
-                  members: {
-                    some: {
-                      userId: user.id
+            },
+            {
+              teams: {
+                some: {
+                  team: {
+                    members: {
+                      some: {
+                        userId: user.id
+                      }
                     }
                   }
                 }
               }
             }
-          }
-        ]
-      };
-      
-      // Combine with existing filters
-      if (Object.keys(filters).length > 0) {
-        filters.AND = [userTaskFilters, { ...filters }];
-        // Remove the filters we just moved to AND
-        delete filters.assignees;
-        delete filters.teams;
-        delete filters.projectId;
-        delete filters.status;
-        delete filters.priority;
-      } else {
-        Object.assign(filters, userTaskFilters);
+          ]
+        };
+        
+        // Combine with existing filters
+        if (Object.keys(filters).length > 0) {
+          filters.AND = [userTaskFilters, { ...filters }];
+          // Remove the filters we just moved to AND
+          delete filters.assignees;
+          delete filters.teams;
+          delete filters.projectId;
+          delete filters.status;
+          delete filters.priority;
+        } else {
+          Object.assign(filters, userTaskFilters);
+        }
       }
     }
     
@@ -151,6 +175,7 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: "desc",
       },
+      take: limit,
       include: {
         assignees: {
           include: {
@@ -237,7 +262,7 @@ export async function GET(request: NextRequest) {
       teams: task.teams.map(tt => tt.team)
     }));
     
-    return NextResponse.json(transformedTasks);
+    return NextResponse.json({ tasks: transformedTasks });
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return NextResponse.json({ message: "Error fetching tasks" }, { status: 500 });

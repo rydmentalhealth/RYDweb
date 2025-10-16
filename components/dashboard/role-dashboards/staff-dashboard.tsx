@@ -1,10 +1,17 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { 
   FolderKanban, 
   Calendar, 
@@ -18,125 +25,166 @@ import {
   ExternalLink,
   Plus,
   Send,
-  Target
+  Target,
+  Users,
+  CalendarDays,
+  BarChart3,
+  Award,
+  AlertTriangle,
+  Loader2,
+  Edit,
+  Save,
+  Eye
 } from "lucide-react"
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar'
 import 'react-circular-progressbar/dist/styles.css'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import Link from "next/link"
+import { toast } from "sonner"
+import { format } from "date-fns"
 
-// Mock data - replace with real API calls
-const kpiData = {
-  assignedProjects: 3,
-  tasksDueThisWeek: 7,
-  completedTasks: 42,
-  attendanceRate: 92,
-  recentStipends: 850000 // UGX
+// Interfaces for type safety
+interface DashboardStats {
+  assignedProjects: number
+  tasksDueThisWeek: number
+  completedTasks: number
+  attendanceRate: number
+  recentStipends: number
+  weeklyHours: number
+  communitiesReached: number
+  pendingTasks: number
 }
 
-const monthlyCompletionData = [
-  { week: 'Week 1', completed: 8, assigned: 10 },
-  { week: 'Week 2', completed: 12, assigned: 14 },
-  { week: 'Week 3', completed: 9, assigned: 12 },
-  { week: 'Week 4', completed: 13, assigned: 15 }
-]
-
-const assignedTasks = [
-  { 
-    id: 1, 
-    title: 'Update client counseling records', 
-    project: 'Mental Health Services',
-    priority: 'high',
-    due: '2 days',
-    status: 'in_progress'
-  },
-  { 
-    id: 2, 
-    title: 'Prepare youth workshop materials', 
-    project: 'Youth Programs',
-    priority: 'medium',
-    due: '4 days',
-    status: 'todo'
-  },
-  { 
-    id: 3, 
-    title: 'Community outreach follow-up calls', 
-    project: 'Community Engagement',
-    priority: 'low',
-    due: '1 week',
-    status: 'todo'
-  },
-  { 
-    id: 4, 
-    title: 'Monthly activity report', 
-    project: 'Department Admin',
-    priority: 'high',
-    due: '3 days',
-    status: 'in_progress'
+interface Task {
+  id: string
+  title: string
+  description?: string
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE'
+  endDate?: string
+  project?: {
+    name: string
   }
-]
+}
 
-const recentActivities = [
-  { 
-    id: 1, 
-    activity: 'Completed 3 individual counseling sessions',
-    project: 'Mental Health Services',
-    time: '2 hours ago',
-    type: 'task_completion'
-  },
-  { 
-    id: 2, 
-    activity: 'Submitted weekly department report',
-    project: 'Department Admin',
-    time: '1 day ago',
-    type: 'report_submission'
-  },
-  { 
-    id: 3, 
-    activity: 'Attended team coordination meeting',
-    project: 'Team Management',
-    time: '2 days ago',
-    type: 'meeting'
-  },
-  { 
-    id: 4, 
-    activity: 'Updated client database with new entries',
-    project: 'Data Management',
-    time: '3 days ago',
-    type: 'data_entry'
+interface DailyUpdate {
+  id?: string
+  date: string
+  description: string
+  hoursSpent?: number
+  isApproved: boolean
+  approvedAt?: string
+  submittedToHR: boolean
+}
+
+interface Event {
+  id: string
+  title: string
+  description?: string
+  date: string
+  type: string
+}
+
+interface Announcement {
+  id: string
+  title: string
+  content: string
+  type: string
+  priority: string
+  createdAt: string
+  author: {
+    name: string
+    role: string
   }
-]
+}
 
-const hrMessages = [
-  {
-    id: 1,
-    from: 'HR Department',
-    subject: 'Monthly Performance Review Scheduled',
-    preview: 'Your performance review is scheduled for next Friday at 2:00 PM...',
-    time: '1 day ago',
-    read: false
-  },
-  {
-    id: 2,
-    from: 'Finance Team',
-    subject: 'Stipend Payment Processed',
-    preview: 'Your monthly stipend has been processed and will be available...',
-    time: '3 days ago',
-    read: true
-  },
-  {
-    id: 3,
-    from: 'Team Lead',
-    subject: 'New Project Assignment',
-    preview: 'You have been assigned to the new community outreach project...',
-    time: '1 week ago',
-    read: true
-  }
-]
-
-const monthlyCompletionRate = 87 // percentage
 
 export function StaffDashboard() {
+  const { data: session } = useSession()
+  const [stats, setStats] = useState<DashboardStats>({
+    assignedProjects: 0,
+    tasksDueThisWeek: 0,
+    completedTasks: 0,
+    attendanceRate: 0,
+    recentStipends: 0,
+    weeklyHours: 0,
+    communitiesReached: 0,
+    pendingTasks: 0
+  })
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [dailyUpdate, setDailyUpdate] = useState<DailyUpdate>({
+    date: format(new Date(), 'yyyy-MM-dd'),
+    description: '',
+    hoursSpent: 0,
+    isApproved: false,
+    submittedToHR: false
+  })
+  const [events, setEvents] = useState<Event[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [loading, setLoading] = useState(true)
+  const [submittingUpdate, setSubmittingUpdate] = useState(false)
+  const [isEditingUpdate, setIsEditingUpdate] = useState(false)
+  const [isDailyUpdateDialogOpen, setIsDailyUpdateDialogOpen] = useState(false)
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchDashboardData()
+    }
+  }, [session?.user?.id])
+
+  const fetchDashboardData = async () => {
+    try {
+      const [statsRes, tasksRes, eventsRes, announcementsRes, dailyUpdateRes] = await Promise.all([
+        fetch('/api/dashboard/staff-stats'),
+        fetch('/api/tasks?assigned=true&limit=10'),
+        fetch('/api/events?upcoming=true&limit=5'),
+        fetch('/api/communication/announcements?limit=5'),
+        fetch(`/api/attendance/daily-logs?date=${format(new Date(), 'yyyy-MM-dd')}`)
+      ])
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json()
+        setStats(statsData)
+      }
+
+      if (tasksRes.ok) {
+        const tasksData = await tasksRes.json()
+        setTasks(tasksData.tasks || [])
+      }
+
+      if (eventsRes.ok) {
+        const eventsData = await eventsRes.json()
+        setEvents(eventsData.events || [])
+      }
+
+      if (announcementsRes.ok) {
+        const announcementsData = await announcementsRes.json()
+        setAnnouncements(announcementsData.announcements || [])
+      }
+
+      if (dailyUpdateRes.ok) {
+        const dailyUpdateData = await dailyUpdateRes.json()
+        if (dailyUpdateData.logs && dailyUpdateData.logs.length > 0) {
+          const todayLog = dailyUpdateData.logs[0]
+          setDailyUpdate({
+            id: todayLog.id,
+            date: format(new Date(todayLog.date), 'yyyy-MM-dd'),
+            description: todayLog.description,
+            hoursSpent: todayLog.hoursSpent || 0,
+            isApproved: todayLog.isApproved,
+            approvedAt: todayLog.approvedAt,
+            submittedToHR: todayLog.isApproved || false
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+      toast.error('Failed to load dashboard data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-UG', {
       style: 'currency',
@@ -157,11 +205,74 @@ export function StaffDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-600 text-white'
-      case 'in_progress': return 'bg-[#0B874E] text-white'
-      case 'todo': return 'bg-gray-200 text-gray-800'
+      case 'COMPLETED': return 'bg-green-600 text-white'
+      case 'IN_PROGRESS': return 'bg-[#0B874E] text-white'
+      case 'NOT_STARTED': return 'bg-gray-200 text-gray-800'
+      case 'OVERDUE': return 'bg-red-600 text-white'
       default: return 'bg-gray-200 text-gray-800'
     }
+  }
+
+  const handleDailyUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmittingUpdate(true)
+
+    try {
+      const method = dailyUpdate.id ? 'PUT' : 'POST'
+      const url = dailyUpdate.id 
+        ? `/api/attendance/daily-logs/${dailyUpdate.id}`
+        : '/api/attendance/daily-logs'
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: dailyUpdate.date,
+          description: dailyUpdate.description,
+          hoursSpent: dailyUpdate.hoursSpent,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to submit daily update')
+      }
+
+      toast.success('Daily update submitted successfully! 📝')
+      setIsDailyUpdateDialogOpen(false)
+      setIsEditingUpdate(false)
+      fetchDashboardData()
+    } catch (error) {
+      toast.error('Failed to submit daily update')
+    } finally {
+      setSubmittingUpdate(false)
+    }
+  }
+
+  const handleTaskComplete = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'COMPLETED' }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update task')
+      }
+
+      toast.success('Task marked as completed! ✅')
+      fetchDashboardData()
+    } catch (error) {
+      toast.error('Failed to update task')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   return (
@@ -169,243 +280,390 @@ export function StaffDashboard() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">My Dashboard</h1>
-          <p className="text-muted-foreground">Track your assignments, progress, and contributions to RYD</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">RYD Dashboard</h1>
+          <p className="text-muted-foreground">Welcome back, {session?.user?.name || session?.user?.firstName}! Track your assignments, progress, and contributions to RYD</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <FileText className="h-4 w-4 mr-2" />
-            Submit Update
-          </Button>
-          <Button size="sm" className="bg-[#0B874E] hover:bg-[#0B874E]/90">
-            <DollarSign className="h-4 w-4 mr-2" />
-            Request Expense
-          </Button>
+          <Dialog open={isDailyUpdateDialogOpen} onOpenChange={setIsDailyUpdateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4 mr-2" />
+                Daily Update
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Daily Update</DialogTitle>
+                <DialogDescription>
+                  Log your activities and hours for today. Once submitted to HR, it cannot be edited.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleDailyUpdateSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={dailyUpdate.date}
+                    onChange={(e) => setDailyUpdate({ ...dailyUpdate, date: e.target.value })}
+                    disabled={dailyUpdate.submittedToHR}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Activities & Achievements</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe what you worked on today, tasks completed, challenges faced, and outcomes achieved..."
+                    value={dailyUpdate.description}
+                    onChange={(e) => setDailyUpdate({ ...dailyUpdate, description: e.target.value })}
+                    disabled={dailyUpdate.submittedToHR}
+                    rows={4}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hours">Hours Worked</Label>
+                  <Input
+                    id="hours"
+                    type="number"
+                    step="0.5"
+                    placeholder="e.g. 8"
+                    value={dailyUpdate.hoursSpent || ''}
+                    onChange={(e) => setDailyUpdate({ ...dailyUpdate, hoursSpent: parseFloat(e.target.value) || 0 })}
+                    disabled={dailyUpdate.submittedToHR}
+                  />
+                </div>
+                {dailyUpdate.submittedToHR && (
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      This update has been submitted to HR and is now read-only.
+                      {dailyUpdate.isApproved && ' It has been approved.'}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDailyUpdateDialogOpen(false)}
+                  >
+                    {dailyUpdate.submittedToHR ? 'Close' : 'Cancel'}
+                  </Button>
+                  {!dailyUpdate.submittedToHR && (
+                    <Button type="submit" disabled={submittingUpdate}>
+                      {submittingUpdate ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        dailyUpdate.id ? 'Update' : 'Submit'
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+          <Link href="/dashboard/communication">
+            <Button variant="outline" size="sm">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Department Chat
+            </Button>
+          </Link>
+          <Link href="/dashboard/finance">
+            <Button size="sm" className="bg-[#0B874E] hover:bg-[#0B874E]/90">
+              <DollarSign className="h-4 w-4 mr-2" />
+              Request Expense
+            </Button>
+          </Link>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-[#0B874E]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assigned Projects</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Assignments</CardTitle>
             <FolderKanban className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.assignedProjects}</div>
-            <p className="text-xs text-muted-foreground">Active projects</p>
+            <div className="text-2xl font-bold">{stats.assignedProjects}</div>
+            <p className="text-xs text-muted-foreground">Current projects</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tasks Due</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Hours This Week</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.tasksDueThisWeek}</div>
-            <p className="text-xs text-muted-foreground">This week</p>
+            <div className="text-2xl font-bold">{stats.weeklyHours}</div>
+            <p className="text-xs text-muted-foreground">From attendance</p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="border-l-4 border-l-red-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Tasks</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.completedTasks}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <div className="text-2xl font-bold">{stats.pendingTasks}</div>
+            <p className="text-xs text-muted-foreground">Need attention</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Attendance Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Team Lead Feedback</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.attendanceRate}%</div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Stipends</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(kpiData.recentStipends)}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <div className="text-2xl font-bold">{dailyUpdate.isApproved ? '✅' : '⏳'}</div>
+            <p className="text-xs text-muted-foreground">{dailyUpdate.isApproved ? 'Approved' : 'Pending'}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Monthly Completion Rate */}
+      {/* Your Impact at RYD */}
       <Card className="border-2 border-[#0B874E]/20 bg-gradient-to-r from-green-50 to-emerald-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-[#0B874E]" />
-            Your Monthly Completion Rate
+            <Award className="h-5 w-5 text-[#0B874E]" />
+            Your Impact at RYD
           </CardTitle>
-          <CardDescription>Track your progress and productivity this month</CardDescription>
+          <CardDescription>See the difference you're making in our community</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-8">
-            <div className="w-24 h-24">
-              <CircularProgressbar
-                value={monthlyCompletionRate}
-                text={`${monthlyCompletionRate}%`}
-                styles={buildStyles({
-                  textColor: '#0B874E',
-                  pathColor: '#0B874E',
-                  trailColor: '#E5E7EB'
-                })}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-[#0B874E]">{stats.completedTasks}</div>
+              <p className="text-sm text-muted-foreground">Tasks Completed</p>
             </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-[#0B874E]">Excellent Performance!</h3>
-              <p className="text-muted-foreground">
-                You've completed 42 out of 48 assigned tasks this month. Keep up the great work!
-              </p>
-              <div className="mt-2 text-sm text-muted-foreground">
-                ✅ Consistently meeting deadlines • ✅ High quality submissions • 🎯 On track for monthly goals
-              </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-[#0B874E]">{stats.weeklyHours}</div>
+              <p className="text-sm text-muted-foreground">Hours Served</p>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-[#0B874E]">{stats.communitiesReached}</div>
+              <p className="text-sm text-muted-foreground">Communities Reached</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Task List and Progress Chart */}
+      {/* My Task Board and Weekly Tracking */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Current Tasks */}
+        {/* My Task Board */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5" />
-              My Current Tasks
+              My Task Board
             </CardTitle>
-            <CardDescription>Tasks assigned to you with completion buttons</CardDescription>
+            <CardDescription>Your current assignments and progress</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {assignedTasks.map((task) => (
-                <div key={task.id} className="flex items-start gap-3 p-4 rounded-lg border">
-                  <div className={`w-3 h-3 rounded-full mt-2 ${getPriorityColor(task.priority)}`} />
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-medium">{task.title}</p>
-                        <p className="text-xs text-muted-foreground">{task.project}</p>
-                        <p className="text-xs text-muted-foreground">Due in {task.due}</p>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Badge className={getStatusColor(task.status)}>
-                          {task.status.replace('_', ' ')}
-                        </Badge>
-                        {task.status !== 'completed' && (
-                          <Button size="sm" variant="outline" className="text-xs">
-                            Mark Complete
-                          </Button>
-                        )}
+            {tasks.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FolderKanban className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No tasks assigned</p>
+                <p className="text-sm">Check back later for new assignments</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {tasks.slice(0, 5).map((task) => (
+                  <div key={task.id} className="flex items-start gap-3 p-4 rounded-lg border">
+                    <div className={`w-3 h-3 rounded-full mt-2 ${getPriorityColor(task.priority)}`} />
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-medium">{task.title}</p>
+                          {task.project && (
+                            <p className="text-xs text-muted-foreground">{task.project.name}</p>
+                          )}
+                          {task.endDate && (
+                            <p className="text-xs text-muted-foreground">
+                              Due: {format(new Date(task.endDate), 'MMM d, yyyy')}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Badge className={getStatusColor(task.status)}>
+                            {task.status.replace('_', ' ')}
+                          </Badge>
+                          {task.status !== 'COMPLETED' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs"
+                              onClick={() => handleTaskComplete(task.id)}
+                            >
+                              Mark Complete
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+                {tasks.length > 5 && (
+                  <Link href="/dashboard/tasks">
+                    <Button variant="outline" className="w-full">
+                      View All Tasks ({tasks.length})
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Weekly Progress Chart */}
+        {/* Weekly Tracking Hours */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Weekly Task Progress
+              <BarChart3 className="h-5 w-5" />
+              Weekly Tracking Hours
             </CardTitle>
-            <CardDescription>Your task completion over the past month</CardDescription>
+            <CardDescription>Hours from your attendance check-in/out</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyCompletionData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="week" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="completed" fill="#0B874E" />
-                  <Bar dataKey="assigned" fill="#94A3B8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {stats.weeklyHours === 0 ? (
+              <div className="text-center py-8">
+                <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground">No attendance records found</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Please ensure you check in and out daily to track your hours
+                </p>
+                <Link href="/dashboard/attendance">
+                  <Button variant="outline">
+                    <Clock className="h-4 w-4 mr-2" />
+                    Go to Attendance
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-[#0B874E]">{stats.weeklyHours}h</div>
+                  <p className="text-sm text-muted-foreground">This week</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Attendance Rate</span>
+                    <span>{stats.attendanceRate}%</span>
+                  </div>
+                  <Progress value={stats.attendanceRate} className="h-2" />
+                </div>
+                <Link href="/dashboard/attendance">
+                  <Button variant="outline" className="w-full">
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Full Report
+                  </Button>
+                </Link>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Activities and HR Messages */}
+      {/* Upcoming RYD Events and RYD Announcements */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Recent Activities Feed */}
+        {/* Upcoming RYD Events */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Your Recent Activities
+              <CalendarDays className="h-5 w-5" />
+              Upcoming RYD Events
             </CardTitle>
-            <CardDescription>Auto-generated activity log</CardDescription>
+            <CardDescription>Don't miss these important events</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border">
-                  <div className="w-2 h-2 bg-[#0B874E] rounded-full mt-2" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{activity.activity}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs">{activity.project}</Badge>
-                      <span className="text-xs text-muted-foreground">{activity.time}</span>
+            {events.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No events currently scheduled</p>
+                <p className="text-sm">Stay tuned for updates!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {events.map((event) => (
+                  <div key={event.id} className="p-4 rounded-lg border border-l-4 border-l-[#0B874E]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{event.title}</p>
+                        {event.description && (
+                          <p className="text-xs text-muted-foreground mt-1">{event.description}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {format(new Date(event.date), 'MMM d, yyyy')}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">{event.type}</Badge>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* HR Messages */}
+        {/* RYD Announcements */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              Message Center
+              RYD Announcements
             </CardTitle>
-            <CardDescription>Messages from HR and team leads</CardDescription>
+            <CardDescription>Latest updates from management</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {hrMessages.map((message) => (
-                <div key={message.id} className={`p-3 rounded-lg border ${!message.read ? 'bg-blue-50 border-blue-200' : ''}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium">{message.from}</span>
-                        {!message.read && <div className="w-2 h-2 bg-blue-500 rounded-full" />}
+            {announcements.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No announcements currently</p>
+                <p className="text-sm">Stay tuned for updates!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {announcements.map((announcement) => (
+                  <div key={announcement.id} className="p-4 rounded-lg border">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium">{announcement.title}</span>
+                          <Badge 
+                            variant={announcement.priority === 'URGENT' ? 'destructive' : 'secondary'} 
+                            className="text-xs"
+                          >
+                            {announcement.priority}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">{announcement.content}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            By {announcement.author.name} • {format(new Date(announcement.createdAt), 'MMM d')}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-sm font-medium">{message.subject}</p>
-                      <p className="text-xs text-muted-foreground">{message.preview}</p>
-                      <span className="text-xs text-muted-foreground">{message.time}</span>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4">
-              <Button variant="outline" size="sm" className="w-full">
-                <Send className="h-4 w-4 mr-2" />
-                Send Feedback to HR
-              </Button>
-            </div>
+                ))}
+                <Link href="/dashboard/communication">
+                  <Button variant="outline" className="w-full">
+                    <Eye className="h-4 w-4 mr-2" />
+                    View All Announcements
+                  </Button>
+                </Link>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -419,22 +677,30 @@ export function StaffDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3">
-              <Link href="/dashboard/tasks">
-                <Button variant="outline" className="w-full justify-start">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Submit Daily Update
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => setIsDailyUpdateDialogOpen(true)}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Daily Update
+              </Button>
               <Link href="/dashboard/finance">
                 <Button variant="outline" className="w-full justify-start">
                   <DollarSign className="h-4 w-4 mr-2" />
                   Request Expense Reimbursement
                 </Button>
               </Link>
-              <Link href="/dashboard/teams">
+              <Link href="/dashboard/communication">
                 <Button variant="outline" className="w-full justify-start">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  View My Department
+                  <Users className="h-4 w-4 mr-2" />
+                  Department Chat
+                </Button>
+              </Link>
+              <Link href="/dashboard/attendance">
+                <Button variant="outline" className="w-full justify-start">
+                  <Clock className="h-4 w-4 mr-2" />
+                  Check In/Out
                 </Button>
               </Link>
             </div>
@@ -448,18 +714,24 @@ export function StaffDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-between">
-                Personal Drive Folder
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" className="w-full justify-between">
-                Department Notion Page
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" className="w-full justify-between">
-                RYD Resources Hub
-                <ExternalLink className="h-4 w-4" />
-              </Button>
+              <Link href="/dashboard/tasks">
+                <Button variant="outline" className="w-full justify-between">
+                  My Tasks
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/dashboard/teams">
+                <Button variant="outline" className="w-full justify-between">
+                  My Department
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/dashboard/resources">
+                <Button variant="outline" className="w-full justify-between">
+                  RYD Resources Hub
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
