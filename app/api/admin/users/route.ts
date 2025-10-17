@@ -59,7 +59,8 @@ export async function GET(req: NextRequest) {
       orderBy: [
         { status: 'asc' }, // Show pending first
         { createdAt: 'desc' }
-      ]
+      ],
+      cacheStrategy: { ttl: 600 }, // 10 minutes cache for user list
     });
     
     return NextResponse.json(users);
@@ -88,11 +89,12 @@ export async function POST(req: NextRequest) {
     // Validate the data
     const validatedData = createUserSchema.parse(data);
     
-    // Check if email already exists
+    // Check if email already exists - cache for 5 minutes
     const existingUser = await prismaClient.user.findUnique({
       where: {
         email: validatedData.email
       },
+      cacheStrategy: { ttl: 300 },
     });
     
     if (existingUser) {

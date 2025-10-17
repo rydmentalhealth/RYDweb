@@ -229,7 +229,8 @@ export const authConfig: NextAuthConfig = {
               name: true,
               role: true,
               status: true,
-            }
+            },
+            cacheStrategy: { ttl: 300 }, // 5 minutes cache for user auth data
           });
           
           if (freshUser) {
@@ -443,6 +444,7 @@ export const authConfig: NextAuthConfig = {
 
           const user = await prisma.user.findUnique({
             where: { email },
+            cacheStrategy: { ttl: 300 }, // 5 minutes cache for login attempts
           });
 
           if (!user || !user.password) {
@@ -522,7 +524,8 @@ export async function getServerSession() {
           name: true,
           role: true,
           status: true,
-        }
+        },
+        cacheStrategy: { ttl: 300 }, // 5 minutes cache for session validation
       });
       
       if (user) {

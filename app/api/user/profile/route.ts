@@ -16,9 +16,10 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json()
     const userId = session.user.id
     
-    // Check if the user exists
+    // Check if the user exists - cache for 5 minutes
     const existingUser = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      cacheStrategy: { ttl: 300 },
     })
     
     if (!existingUser) {
@@ -116,7 +117,8 @@ export async function GET(request: NextRequest) {
         status: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
+      cacheStrategy: { ttl: 600 }, // 10 minutes cache for user profile data
     })
     
     if (!user) {

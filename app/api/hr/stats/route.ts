@@ -48,37 +48,54 @@ export async function GET(request: NextRequest) {
       approvedLeaveRequests,
       
     ] = await Promise.all([
-      // Employee directory stats
-      prisma.employeeProfile.count(),
-      prisma.employeeProfile.count({ where: { status: 'ACTIVE' } }),
+      // Employee directory stats - cache for 1 hour
+      prisma.employeeProfile.count({ cacheStrategy: { ttl: 3600 } }),
+      prisma.employeeProfile.count({ 
+        where: { status: 'ACTIVE' },
+        cacheStrategy: { ttl: 3600 }
+      }),
       prisma.employeeProfile.count({
         where: {
           createdAt: { gte: startOfMonth }
-        }
+        },
+        cacheStrategy: { ttl: 1800 } // 30 minutes for monthly stats
       }),
       
-      // System users stats
-      prisma.user.count(),
-      prisma.user.count({ where: { status: 'ACTIVE' } }),
-      prisma.user.count({ where: { status: 'PENDING' } }),
+      // System users stats - cache for 30 minutes
+      prisma.user.count({ cacheStrategy: { ttl: 1800 } }),
+      prisma.user.count({ 
+        where: { status: 'ACTIVE' },
+        cacheStrategy: { ttl: 1800 }
+      }),
+      prisma.user.count({ 
+        where: { status: 'PENDING' },
+        cacheStrategy: { ttl: 300 } // 5 minutes for pending users
+      }),
       
-      // Pending approvals - active users without employee profiles
+      // Pending approvals - cache for 10 minutes
       prisma.user.count({
         where: {
           status: 'ACTIVE',
           employeeProfile: null
-        }
+        },
+        cacheStrategy: { ttl: 600 }
       }),
       
       // Additional HR stats (mock for now - can be implemented later)
       Promise.resolve(12), // upcomingReviews
       Promise.resolve(5),  // openPositions
       Promise.resolve(28), // trainingCompleted
-      prisma.performanceReview.count(),
+      prisma.performanceReview.count({ cacheStrategy: { ttl: 3600 } }), // 1 hour
       
-      // Leave requests
-      prisma.leaveRequest.count({ where: { status: 'PENDING' } }),
-      prisma.leaveRequest.count({ where: { status: 'APPROVED' } }),
+      // Leave requests - cache for 15 minutes
+      prisma.leaveRequest.count({ 
+        where: { status: 'PENDING' },
+        cacheStrategy: { ttl: 900 }
+      }),
+      prisma.leaveRequest.count({ 
+        where: { status: 'APPROVED' },
+        cacheStrategy: { ttl: 1800 } // 30 minutes for approved requests
+      }),
     ]);
 
     // Calculate department breakdown
