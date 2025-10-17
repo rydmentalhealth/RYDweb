@@ -6,9 +6,14 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 // Use the Prisma Accelerate URL if available, otherwise fall back to DATABASE_URL
 // Check for the accelerate URL first (it has the api_key parameter)
-const databaseUrl = process.env.PRISMA_DATABASE_URL?.includes('accelerate.prisma-data.net') 
+let databaseUrl = process.env.PRISMA_DATABASE_URL?.includes('accelerate.prisma-data.net') 
   ? process.env.PRISMA_DATABASE_URL 
   : process.env.DATABASE_URL;
+
+// Clean up any whitespace or formatting issues in the URL
+if (databaseUrl) {
+  databaseUrl = databaseUrl.replace(/\s+/g, '').trim();
+}
 
 // Fallback URL for build time when DATABASE_URL is not available
 const fallbackUrl = 'postgresql://user:password@localhost:5432/ryd_dev';
