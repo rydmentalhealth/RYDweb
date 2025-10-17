@@ -23,8 +23,14 @@ if (process.env.NODE_ENV === 'production') {
   console.log('[Database] URL Selection:', {
     hasAccelerateUrl: !!process.env.PRISMA_DATABASE_URL?.includes('accelerate.prisma-data.net'),
     selectedUrl: databaseUrl?.substring(0, 50) + '...',
-    urlType: databaseUrl?.startsWith('prisma+postgres://accelerate') ? 'Accelerate' : 'Standard'
+    urlType: databaseUrl?.startsWith('prisma://accelerate') ? 'Accelerate' : 
+             databaseUrl?.startsWith('prisma+postgres://accelerate') ? 'Accelerate (Wrong Format)' : 'Standard'
   });
+  
+  // Warn about incorrect Accelerate URL format
+  if (process.env.PRISMA_DATABASE_URL?.includes('prisma+postgres://')) {
+    console.warn('[Database] WARNING: Prisma Accelerate URL uses incorrect protocol. Use "prisma://" instead of "prisma+postgres://"');
+  }
 }
 
 export const prisma =
