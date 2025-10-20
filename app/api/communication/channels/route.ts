@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
 
-    // Get channels where user is a member
+    // Get channels where user is a member - cache for 5 minutes
     const channels = await prisma.chatChannel.findMany({
       where: {
         isActive: true,
@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
       orderBy: [
         { updatedAt: 'desc' },
       ],
+      cacheStrategy: { ttl: 300 }, // 5 minutes cache for channel list
     });
 
     // Calculate unread counts for each channel
@@ -135,10 +136,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, description, type, departmentId, memberIds } = createChannelSchema.parse(body);
 
-    // Check permissions
+    // Check permissions - cache for 10 minutes
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { role: true, department: true },
+      cacheStrategy: { ttl: 600 },
     });
 
     if (!user) {

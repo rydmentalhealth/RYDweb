@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
         },
         orderBy: {
           createdAt: 'desc'
-        }
+        },
+        cacheStrategy: { ttl: 300 }, // 5 minutes cache for pending users
       })
 
       const count = users.length

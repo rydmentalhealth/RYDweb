@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user?.email || "" },
+      cacheStrategy: { ttl: 300 }, // 5 minutes cache for user lookup
     });
     console.log("[API Tasks] User found:", user?.email, "Role:", user?.role, "Status:", user?.status);
 

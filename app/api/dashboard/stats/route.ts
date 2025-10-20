@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
           id: true,
           role: true,
           status: true,
-        }
+        },
+        cacheStrategy: { ttl: 300 }, // 5 minutes cache for user lookup
       })
 
       if (!user) {
@@ -60,9 +61,12 @@ export async function GET(request: NextRequest) {
           recentTasksCompleted,
           recentRegistrations,
         ] = await Promise.all([
-          // Tasks
-          prisma.task.count(),
-          prisma.task.count({ where: { status: 'COMPLETED' } }),
+          // Tasks - cache for 15 minutes (dashboard stats)
+          prisma.task.count({ cacheStrategy: { ttl: 900 } }),
+          prisma.task.count({ 
+            where: { status: 'COMPLETED' },
+            cacheStrategy: { ttl: 900 }
+          }),
           prisma.task.count({ 
             where: { 
               status: { not: 'COMPLETED' },
@@ -70,31 +74,49 @@ export async function GET(request: NextRequest) {
                 { endDate: { lt: now } },
                 { startDate: { lt: now } }
               ]
-            } 
+            },
+            cacheStrategy: { ttl: 900 }
           }),
-          prisma.task.count({ where: { status: 'IN_PROGRESS' } }),
+          prisma.task.count({ 
+            where: { status: 'IN_PROGRESS' },
+            cacheStrategy: { ttl: 900 }
+          }),
           
-          // Team members
-          prisma.user.count(),
-          prisma.user.count({ where: { status: 'ACTIVE' } }),
-          prisma.user.count({ where: { status: 'PENDING' } }),
+          // Team members - cache for 30 minutes (changes less frequently)
+          prisma.user.count({ cacheStrategy: { ttl: 1800 } }),
+          prisma.user.count({ 
+            where: { status: 'ACTIVE' },
+            cacheStrategy: { ttl: 1800 }
+          }),
+          prisma.user.count({ 
+            where: { status: 'PENDING' },
+            cacheStrategy: { ttl: 300 } // Shorter cache for pending users
+          }),
           
-          // Projects
-          prisma.project.count(),
-          prisma.project.count({ where: { status: 'ACTIVE' } }),
-          prisma.project.count({ where: { status: 'COMPLETED' } }),
+          // Projects - cache for 30 minutes
+          prisma.project.count({ cacheStrategy: { ttl: 1800 } }),
+          prisma.project.count({ 
+            where: { status: 'ACTIVE' },
+            cacheStrategy: { ttl: 1800 }
+          }),
+          prisma.project.count({ 
+            where: { status: 'COMPLETED' },
+            cacheStrategy: { ttl: 1800 }
+          }),
           
-          // Recent activity (this week)
+          // Recent activity (this week) - cache for 10 minutes
           prisma.task.count({ 
             where: { 
               status: 'COMPLETED',
               completedAt: { gte: startOfThisWeek }
-            } 
+            },
+            cacheStrategy: { ttl: 600 }
           }),
           prisma.user.count({ 
             where: { 
               createdAt: { gte: startOfThisWeek }
-            } 
+            },
+            cacheStrategy: { ttl: 600 }
           }),
         ])
 

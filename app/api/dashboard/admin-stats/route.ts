@@ -40,8 +40,11 @@ export async function GET(request: NextRequest) {
       recentCheckIns,
       
     ] = await Promise.all([
-      // Team metrics
-      prisma.user.count({ where: { status: 'ACTIVE' } }),
+      // Team metrics - cache for 30 minutes
+      prisma.user.count({ 
+        where: { status: 'ACTIVE' },
+        cacheStrategy: { ttl: 1800 }
+      }),
       prisma.user.count({ 
         where: { 
           role: 'VOLUNTEER',
@@ -51,18 +54,26 @@ export async function GET(request: NextRequest) {
             { tasks: { some: { createdAt: { gte: startOfWeek } } } },
             { checkIns: { some: { createdAt: { gte: startOfWeek } } } }
           ]
-        }
+        },
+        cacheStrategy: { ttl: 900 } // 15 minutes for activity-based queries
       }),
-      prisma.user.count({ where: { status: 'PENDING' } }),
+      prisma.user.count({ 
+        where: { status: 'PENDING' },
+        cacheStrategy: { ttl: 300 } // 5 minutes for pending users
+      }),
       prisma.task.count({ 
         where: { 
           status: 'COMPLETED',
           completedAt: { gte: startOfToday }
-        }
+        },
+        cacheStrategy: { ttl: 600 } // 10 minutes for daily stats
       }),
       
-      // Employee profiles count for departmental updates
-      prisma.employeeProfile.count({ where: { status: 'ACTIVE' } }),
+      // Employee profiles count for departmental updates - cache for 1 hour
+      prisma.employeeProfile.count({ 
+        where: { status: 'ACTIVE' },
+        cacheStrategy: { ttl: 3600 }
+      }),
       
       // Recent tasks for activity data
       prisma.task.findMany({
