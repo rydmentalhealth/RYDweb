@@ -7,7 +7,8 @@ import { DefaultSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AppleProvider from "next-auth/providers/apple";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/lib/db";
+import { prisma, withRetry } from "@/lib/db";
+import { findUserForAuth, findUserById, updateLastLogin } from "@/lib/services/optimized-auth-queries";
 import { UserRole, UserStatus } from "@prisma/client";
 
 // Extend the next-auth types
@@ -219,19 +220,7 @@ export const authConfig: NextAuthConfig = {
       
       if (shouldRefresh && token.id) {
         try {
-          const freshUser = await prisma.user.findUnique({
-            where: { id: token.id as string },
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-              name: true,
-              role: true,
-              status: true,
-            },
-            cacheStrategy: { ttl: 300 }, // 5 minutes cache for user auth data
-          });
+          const freshUser = await findUserById(token.id as string);
           
           if (freshUser) {
             token.id = freshUser.id;
@@ -243,7 +232,8 @@ export const authConfig: NextAuthConfig = {
             console.log("[Auth] JWT token refreshed with latest user data:", freshUser.email, "status:", freshUser.status);
           }
         } catch (error) {
-          console.error("[Auth] Failed to refresh user data:", error);
+          console.error("[Auth] Failed to refresh user data after retries:", error);
+          // Continue with existing token data instead of failing completely
         }
       }
       
@@ -440,15 +430,18 @@ export const authConfig: NextAuthConfig = {
           const password = credentials.password as string;
 
         try {
-          console.log(`Attempting login for email: ${email}`);
+          console.log(`[Auth] Attempting login for email: ${email}`);
 
-          const user = await prisma.user.findUnique({
-            where: { email },
-            cacheStrategy: { ttl: 300 }, // 5 minutes cache for login attempts
-          });
+          const user = await findUserForAuth(email);
 
           if (!user || !user.password) {
-            console.log("User not found or no password set");
+            console.log("[Auth] User not found or no password set for:", email);
+            return null;
+          }
+
+          // Check user status before password validation
+          if (user.status === 'SUSPENDED' || user.status === 'INACTIVE' || user.status === 'REJECTED') {
+            console.log(`[Auth] Login denied - user status is ${user.status} for:`, email);
             return null;
           }
 
@@ -458,22 +451,25 @@ export const authConfig: NextAuthConfig = {
           );
 
           if (!isPasswordValid) {
-            console.log("Invalid password");
+            console.log("[Auth] Invalid password for:", email);
             return null;
           }
 
-          console.log(`Login successful for user: ${user.email} with role: ${user.role}`);
+          console.log(`[Auth] Login successful for user: ${user.email} with role: ${user.role} and status: ${user.status}`);
+          
+          // Update last login timestamp (fire-and-forget)
+          updateLastLogin(user.id);
           
           // Return user object that will be passed to JWT callback
           return {
             id: user.id,
             email: user.email,
-            name: user.name || `${user.firstName} ${user.lastName}`.trim() || user.email,
+            name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
             role: user.role,
             status: user.status,
           };
         } catch (error) {
-          console.error("Authorization error:", error);
+          console.error("[Auth] Authorization error for email:", email, "Error:", error);
           return null;
         }
       },
@@ -514,19 +510,7 @@ export async function getServerSession() {
   if (!session.user.role || !session.user.status) {
     console.log("[Auth] Incomplete user data, fetching from database");
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          name: true,
-          role: true,
-          status: true,
-        },
-        cacheStrategy: { ttl: 300 }, // 5 minutes cache for session validation
-      });
+      const user = await findUserById(session.user.id);
       
       if (user) {
         // Update session with complete user data
@@ -537,7 +521,9 @@ export async function getServerSession() {
         console.log("[Auth] Updated session with complete user data:", user.email, "role:", user.role, "status:", user.status);
       }
     } catch (error) {
-      console.error("[Auth] Failed to fetch complete user data:", error);
+      console.error("[Auth] Failed to fetch complete user data after retries:", error);
+      // Return null session if we can't fetch user data
+      return null;
     }
   }
   
