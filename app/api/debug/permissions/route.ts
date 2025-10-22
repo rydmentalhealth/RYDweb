@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/rbac";
 import { UserRole, UserStatus } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Use shared Prisma client
 
 export async function GET(request: NextRequest) {
   try {

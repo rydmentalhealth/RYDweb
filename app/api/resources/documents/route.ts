@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
 
-// Initialize Prisma client
-const prisma = new PrismaClient()
+// Use shared Prisma client
 
 // GET endpoint to fetch documents
 export async function GET(req: NextRequest) {

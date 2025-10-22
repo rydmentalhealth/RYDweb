@@ -30,11 +30,8 @@ export function NextAuthProvider({ children }: Props) {
         });
       }
       
-      // If on a protected route and no session in production, redirect to login
-      if (!sessionData && 
-          process.env.NODE_ENV === "production" && 
-          pathname.startsWith("/dashboard") && 
-          !pathname.startsWith("/login")) {
+      // If on a protected route and no session, redirect to login with callback
+      if (!sessionData && pathname.startsWith("/dashboard") && !pathname.startsWith("/login")) {
         console.log("[AuthProvider] No session in production on protected route, redirecting to login");
         router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
         return;
@@ -54,11 +51,9 @@ export function NextAuthProvider({ children }: Props) {
     
     // Set up interval to periodically check session in production
     let interval: NodeJS.Timeout | null = null;
-    if (process.env.NODE_ENV === "production") {
-      interval = setInterval(() => {
-        fetchSession();
-      }, 5 * 60 * 1000); // Check every 5 minutes
-    }
+    interval = setInterval(() => {
+      fetchSession();
+    }, 5 * 60 * 1000); // Check every 5 minutes
     
     return () => {
       if (interval) clearInterval(interval);

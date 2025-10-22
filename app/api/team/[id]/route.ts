@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient, UserRole, UserStatus } from '@prisma/client'
+import { UserRole, UserStatus } from '@prisma/client'
 import { auth } from '@/lib/auth'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/db'
 
 // GET - Get a single team member by ID
 export async function GET(
