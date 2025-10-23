@@ -44,10 +44,11 @@ const baseClient = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
 });
 
-// Enable Accelerate when using PRISMA_DATABASE_URL pointing to the Accelerate Data Proxy
+// Enable Accelerate via either PRISMA_DATABASE_URL (preferred) or POSTGRES_URL
+const rawAccelerateUrl = process.env.PRISMA_DATABASE_URL || process.env.POSTGRES_URL || databaseUrl;
 export const isAccelerateEnabled = Boolean(
-  databaseUrl &&
-  (databaseUrl.includes('accelerate.prisma-data.net') || databaseUrl.startsWith('prisma://'))
+  rawAccelerateUrl &&
+  (rawAccelerateUrl.includes('accelerate.prisma-data.net') || rawAccelerateUrl.startsWith('prisma://'))
 );
 
 export const prisma = (globalForPrisma.prisma || (isAccelerateEnabled ? baseClient.$extends(withAccelerate()) : baseClient)) as typeof baseClient;
