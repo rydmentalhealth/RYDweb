@@ -104,7 +104,7 @@ export function SuperAdminDashboard() {
   const fetchSuperAdminStats = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/dashboard/super-admin-stats')
+      const response = await fetch('/api/dashboard/admin-stats')
       if (!response.ok) {
         throw new Error('Failed to fetch super admin stats')
       }
