@@ -154,6 +154,40 @@ export default function BlogPage() {
 
   const updatesPosts: Post[] = [
     {
+      id: 'u0',
+      title: 'Evelyne Represents Us at AMR Run 2025',
+      date: '2025-01-15',
+      summary: 'Our dedicated volunteer Evelyne proudly represented our organization at the AMR Run 2025, raising awareness about mental health and community support.',
+      content: (
+        <div className="space-y-4">
+          <p>
+            We are thrilled to share that our incredible volunteer, Evelyne, represented our organization at the AMR Run 2025, 
+            an event dedicated to raising awareness about Antimicrobial Resistance and promoting community health and wellness.
+          </p>
+          <p>
+            Evelyne&apos;s participation in this important event exemplifies our commitment to community engagement and mental 
+            health advocacy. As she ran through the streets, she carried with her not just our organization&apos;s message, but 
+            also the hope and support we strive to provide to those in need.
+          </p>
+          <p>
+            Events like the AMR Run serve as powerful platforms to connect with the community, share resources, and break down 
+            the stigma surrounding mental health. Evelyne&apos;s dedication to representing us demonstrates the passion and 
+            commitment that drives our volunteers every day.
+          </p>
+          <p>
+            We are immensely proud of Evelyne and grateful for her continued dedication to our mission. Her participation 
+            helps us reach more people, spread awareness about mental health resources, and build stronger community connections.
+          </p>
+          <p>
+            Thank you, Evelyne, for being such an outstanding ambassador for our organization. Your efforts inspire us all 
+            to continue working toward a more supportive and understanding community.
+          </p>
+        </div>
+      ),
+      coverImageUrl: '/evelyne-amr-run-2025.jpg',
+      icon: Heart,
+    },
+    {
       id: 'u1',
       title: 'Platform v1.2 Release',
       date: '2025-07-01',
