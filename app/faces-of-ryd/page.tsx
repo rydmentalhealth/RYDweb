@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { X, Heart, Users, Award, Sparkles } from 'lucide-react';
+import { Heart, Users, Sparkles, Calendar, User } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -14,6 +13,7 @@ interface Profile {
   photo: string;
   story: string;
   highlight: string;
+  date: string;
 }
 
 const profiles: Profile[] = [
@@ -22,145 +22,117 @@ const profiles: Profile[] = [
     name: 'Evelyne Kokurorwaho',
     title: 'Volunteer',
     photo: '/evelyne-kokurorwaho.jpg',
+    date: 'November 2025',
+    highlight: 'A Beacon of Passion and Purpose',
     story: `At RYD Mental Health, we believe true impact begins with people who show up and Evelyne Kokurorwaho is one of them.
 
 Evelyne recently represented RYD at the 2025 AMR Awareness Run at KIU Western Campus, where she passionately engaged participants in conversations about mental wellness, journaling, and self-care. Her energy and empathy reflected the very heart of our mission — to make mental health approachable, relatable, and accessible to all.
 
 As a volunteer, Evelyne continues to inspire others through her dedication and leadership. Her story reminds us that you don't need a title to make a difference — just a willing heart and the courage to take action.
 
-💚 Thank you, Evelyne, for being an example of what it means to restore, yield, and develop.`,
-    highlight: 'A Beacon of Passion and Purpose'
+💚 Thank you, Evelyne, for being an example of what it means to restore, yield, and develop.`
   }
 ];
 
-const ProfileCard = ({ profile, onOpen }: { profile: Profile; onOpen: () => void }) => {
+const BlogPost = ({ profile }: { profile: Profile }) => {
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group"
-      onClick={onOpen}
+      className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12"
     >
-      <div className="relative h-80 overflow-hidden">
+      {/* Featured Image */}
+      <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden">
         <Image
           src={profile.photo}
           alt={profile.name}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className="object-cover"
+          priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <p className="text-white text-sm font-medium">{profile.highlight}</p>
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="h-4 w-4 text-primary-600" />
-          <span className="text-sm font-medium text-primary-600 uppercase tracking-wide">{profile.title}</span>
-        </div>
-        <h3 className="text-2xl font-semibold text-gray-900 mb-3">{profile.name}</h3>
-        <p className="text-gray-600 line-clamp-3">{profile.story.split('\n\n')[0]}</p>
-        <button className="mt-4 text-primary-600 font-medium hover:text-primary-700 transition-colors">
-          Read full story →
-        </button>
-      </div>
-    </motion.div>
-  );
-};
-
-const ProfileModal = ({ profile, isOpen, onClose }: { profile: Profile | null; isOpen: boolean; onClose: () => void }) => {
-  if (!profile) return null;
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-50"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-                <h2 className="text-2xl font-bold text-gray-900">Volunteer Spotlight</h2>
-                <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  aria-label="Close modal"
-                >
-                  <X className="h-6 w-6 text-gray-600" />
-                </button>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-5 w-5 text-white" />
+              <span className="text-sm font-medium text-white/90 uppercase tracking-wide">{profile.title}</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-3">
+              Volunteer Spotlight: {profile.name}
+            </h2>
+            <p className="text-xl md:text-2xl text-white/90 font-medium mb-4">
+              {profile.highlight}
+            </p>
+            <div className="flex items-center gap-4 text-white/80 text-sm">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>{profile.date}</span>
               </div>
-              
-              <div className="p-6 md:p-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="md:col-span-1">
-                    <div className="relative h-64 md:h-full rounded-xl overflow-hidden">
-                      <Image
-                        src={profile.photo}
-                        alt={profile.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                  <div className="md:col-span-2">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="h-5 w-5 text-primary-600" />
-                      <span className="text-sm font-medium text-primary-600 uppercase tracking-wide">{profile.title}</span>
-                    </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-2">{profile.name}</h3>
-                    <p className="text-xl text-primary-600 font-medium mb-4">{profile.highlight}</p>
-                  </div>
-                </div>
-                
-                <div className="prose prose-lg max-w-none">
-                  {profile.story.split('\n\n').map((paragraph, index) => (
-                    <p key={index} className="text-gray-700 mb-4 leading-relaxed">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                <span>{profile.name}</span>
               </div>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* Article Content */}
+      <div className="max-w-4xl mx-auto px-6 md:px-8 py-8 md:py-12">
+        <div className="prose prose-lg md:prose-xl max-w-none">
+          {profile.story.split('\n\n').map((paragraph, index) => {
+            // Check if paragraph contains emoji or special formatting
+            const isThankYou = paragraph.includes('💚');
+            
+            return (
+              <p
+                key={index}
+                className={`mb-6 leading-relaxed ${
+                  isThankYou
+                    ? 'text-lg md:text-xl font-medium text-primary-700 italic'
+                    : 'text-gray-700'
+                }`}
+              >
+                {paragraph}
+              </p>
+            );
+          })}
+        </div>
+
+        {/* Author Box */}
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="flex items-start gap-4">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+              <Image
+                src={profile.photo}
+                alt={profile.name}
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-1">{profile.name}</h4>
+              <p className="text-sm text-primary-600 font-medium mb-2">{profile.title}</p>
+              <p className="text-sm text-gray-600">
+                {profile.highlight}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.article>
   );
 };
 
 export default function FacesOfRYDPage() {
-  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = (profile: Profile) => {
-    setSelectedProfile(profile);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setTimeout(() => setSelectedProfile(null), 300);
-  };
-
   return (
     <>
       <Navbar />
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-primary-50 via-purple-50 to-white py-20">
+        <section className="relative overflow-hidden bg-gradient-to-b from-primary-50 via-purple-50 to-white py-16 md:py-20">
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
             <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
@@ -188,25 +160,23 @@ export default function FacesOfRYDPage() {
           </div>
         </section>
 
-        {/* Profiles Grid Section */}
-        <section className="py-20">
+        {/* Blog Posts Section */}
+        <section className="py-12 md:py-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            {profiles.length === 0 ? (
-              <div className="text-center py-20">
-                <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">More faces coming soon...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {profiles.map((profile) => (
-                  <ProfileCard
-                    key={profile.id}
-                    profile={profile}
-                    onOpen={() => openModal(profile)}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="max-w-5xl mx-auto">
+              {profiles.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-2xl shadow-lg">
+                  <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg">More stories coming soon...</p>
+                </div>
+              ) : (
+                <div>
+                  {profiles.map((profile) => (
+                    <BlogPost key={profile.id} profile={profile} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
@@ -247,11 +217,6 @@ export default function FacesOfRYDPage() {
         </section>
       </div>
       <Footer />
-      <ProfileModal
-        profile={selectedProfile}
-        isOpen={isModalOpen}
-        onClose={closeModal}
-      />
     </>
   );
 }
