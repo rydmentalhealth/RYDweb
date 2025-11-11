@@ -21,7 +21,7 @@ const profiles: Profile[] = [
     id: 'evelyne',
     name: 'Evelyne Kokurorwaho',
     title: 'Volunteer',
-    photo: '/evelyne-kokurorwaho.jpg',
+    photo: '/evelyne-amr-run-2025.jpg',
     date: 'November 2025',
     highlight: 'A Beacon of Passion and Purpose',
     story: `At RYD Mental Health, we believe true impact begins with people who show up and Evelyne Kokurorwaho is one of them.
