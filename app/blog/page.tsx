@@ -154,6 +154,95 @@ export default function BlogPage() {
 
   const updatesPosts: Post[] = [
     {
+      id: 'u-1',
+      title: 'RYD Partners with the AMR Club for the 2025 AMR Awareness Run',
+      date: '2025-11-08',
+      summary: 'RYD Mental Health proudly partnered with the AMR Club of Kampala International University–Western Campus for the annual AMR Awareness Run, promoting holistic health and mental wellness.',
+      content: (
+        <div className="space-y-6">
+          <div className="text-sm text-gray-600 space-y-1">
+            <p><strong>Event Date:</strong> Saturday, 8th November 2025</p>
+            <p><strong>Venue:</strong> Kampala International University – Western Campus, Ishaka</p>
+          </div>
+          
+          <p>
+            On 8th November 2025, RYD Mental Health proudly partnered with the Antimicrobial Resistance (AMR) Club of Kampala International University–Western Campus for the annual AMR Awareness Run—a powerful event aimed at promoting health awareness, fitness, and community engagement among students and staff.
+          </p>
+          
+          <p>
+            The event, which began at 7:00 a.m. at the KIU basketball court, brought together hundreds of participants under the theme of promoting responsible health practices and use of antibiotics and resilience within the university community.
+          </p>
+          
+          <p>
+            It featured a variety of activities including aerobics, a quiz session, health talks, entertainment, and the official AMR Run flagged off by university and community leaders.
+          </p>
+          
+          <div className="my-6">
+            <div className="relative w-full h-64 md:h-96 rounded-lg overflow-hidden">
+              <Image src="/amr-run-2025-1.jpg" alt="AMR Run 2025 event at KIU Western Campus" fill className="object-cover" />
+            </div>
+          </div>
+          
+          <p>
+            RYD&apos;s participation focused on the mental wellness component of holistic health. Our team set up a wellness camp that offered participants the opportunity to:
+          </p>
+          
+          <ul className="list-disc pl-6 space-y-2">
+            <li>Learn about journaling as a therapeutic tool for stress management and emotional regulation.</li>
+            <li>Register for free mental health consultations and therapy sessions.</li>
+            <li>Purchase Write to Restore journals, whose proceeds support mental health outreach in underserved schools.</li>
+            <li>Onboard new volunteers passionate about mental health advocacy and community work.</li>
+          </ul>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+            <div className="relative w-full h-64 rounded-lg overflow-hidden">
+              <Image src="/amr-run-2025-2.jpg" alt="RYD team at AMR Run 2025 wellness camp" fill className="object-cover" />
+            </div>
+            <div className="relative w-full h-64 rounded-lg overflow-hidden">
+              <Image src="/amr-run-2025-3.jpg" alt="Participants engaging with RYD wellness activities" fill className="object-cover" />
+            </div>
+          </div>
+          
+          <p>
+            Our team was ably represented by Anita Asasira, Henry Bwambale (General Secretary), Raymond Kasaga (Creatives Director), Reem Adio, Ssebalamu Elvis, Evelyne Kokurorwaho, and Nyathak, who engaged participants throughout the event and led interactive sessions on journaling and self-care.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+            <div className="relative w-full h-64 rounded-lg overflow-hidden">
+              <Image src="/amr-run-2025-4.jpg" alt="RYD team members engaging with event participants" fill className="object-cover" />
+            </div>
+            <div className="relative w-full h-64 rounded-lg overflow-hidden">
+              <Image src="/amr-run-2025-5.jpg" alt="AMR Run 2025 event activities and participants" fill className="object-cover" />
+            </div>
+          </div>
+          
+          <p>
+            The partnership not only strengthened the bond between RYD and AMR Club but also emphasized the importance of integrating mental health awareness into broader public health initiatives.
+          </p>
+          
+          <p>
+            Through this collaboration, we continue to remind communities that true wellness is both physical and mental.
+          </p>
+          
+          <div className="my-6">
+            <div className="relative w-full h-64 md:h-96 rounded-lg overflow-hidden">
+              <Image src="/amr-run-2025-6.jpg" alt="AMR Run 2025 event highlights and community engagement" fill className="object-cover" />
+            </div>
+          </div>
+          
+          <p>
+            As we look ahead, RYD remains committed to building more partnerships that inspire young people to prioritize their health, seek support, and embrace sustainable mental wellness practices.
+          </p>
+          
+          <p className="text-lg font-medium text-primary-700 italic">
+            Together, let&apos;s write to restore hope, strength, and resilience.
+          </p>
+        </div>
+      ),
+      coverImageUrl: '/amr-run-2025-1.jpg',
+      icon: Heart,
+    },
+    {
       id: 'u0',
       title: 'Evelyne Represents Us at AMR Run 2025',
       date: '2025-01-15',
