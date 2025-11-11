@@ -14,6 +14,7 @@ const navigation = [
   { name: 'Blog', href: '/blog' },
   { name: 'Gallery', href: '/gallery' },
   { name: 'About', href: '/about' },
+  { name: 'Faces of RYD', href: '/faces-of-ryd' },
   { name: 'Contact', href: '/contact' },
 ];
 
