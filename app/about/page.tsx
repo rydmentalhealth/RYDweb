@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { 
@@ -16,7 +17,9 @@ import {
   Zap,
   Eye,
   Rocket,
-  Wand2
+  Wand2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -207,6 +210,14 @@ const ValueCard = ({ value, index }: { value: typeof values[0], index: number })
 const TeamCard = ({ member, index }: { member: typeof team[0], index: number }) => {
   const avenger = avengerIdentities[member.avengerIdentity];
   const AvengerIcon = avenger.icon;
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Determine if bio is long enough to need truncation (more than ~200 characters)
+  const BIO_TRUNCATE_LENGTH = 200;
+  const needsTruncation = member.bio.length > BIO_TRUNCATE_LENGTH;
+  const displayBio = isExpanded || !needsTruncation 
+    ? member.bio 
+    : member.bio.substring(0, BIO_TRUNCATE_LENGTH) + '...';
   
   return (
     <motion.div
@@ -251,9 +262,30 @@ const TeamCard = ({ member, index }: { member: typeof team[0], index: number }) 
         <p className="text-primary-600 font-semibold mb-3 text-sm uppercase tracking-wide">
           {member.role}
         </p>
-        <p className="text-gray-600 text-sm leading-relaxed line-clamp-4">
-          {member.bio}
-        </p>
+        
+        {/* Bio with See More functionality */}
+        <div className="mb-3">
+          <p className="text-gray-600 text-sm leading-relaxed">
+            {displayBio}
+          </p>
+          {needsTruncation && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={`mt-2 inline-flex items-center gap-1 text-sm font-semibold transition-colors duration-200 ${
+                isExpanded 
+                  ? `text-gray-600 hover:text-gray-800` 
+                  : `text-primary-600 hover:text-primary-700`
+              }`}
+            >
+              {isExpanded ? 'See less' : 'See more'}
+              {isExpanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+          )}
+        </div>
 
         {/* Power Badge */}
         <div className="mt-4 pt-4 border-t border-gray-100">
