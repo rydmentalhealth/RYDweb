@@ -212,12 +212,21 @@ const TeamCard = ({ member, index }: { member: typeof team[0], index: number }) 
   const AvengerIcon = avenger.icon;
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Determine if bio is long enough to need truncation (more than ~200 characters)
-  const BIO_TRUNCATE_LENGTH = 200;
+  // Determine if bio is long enough to need truncation (more than ~180 characters)
+  const BIO_TRUNCATE_LENGTH = 180;
   const needsTruncation = member.bio.length > BIO_TRUNCATE_LENGTH;
+  
+  // Truncate at word boundary for better readability
+  const truncateBio = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    const truncated = text.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
+  };
+  
   const displayBio = isExpanded || !needsTruncation 
     ? member.bio 
-    : member.bio.substring(0, BIO_TRUNCATE_LENGTH) + '...';
+    : truncateBio(member.bio, BIO_TRUNCATE_LENGTH);
   
   return (
     <motion.div
@@ -249,7 +258,7 @@ const TeamCard = ({ member, index }: { member: typeof team[0], index: number }) 
       </div>
 
       {/* Content */}
-      <div className="p-6 relative">
+      <div className="p-6 relative z-10">
         {/* Avenger Identity Badge */}
         <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${avenger.gradient} text-white text-sm font-semibold mb-4 shadow-md`}>
           <AvengerIcon className="h-4 w-4" />
@@ -264,25 +273,34 @@ const TeamCard = ({ member, index }: { member: typeof team[0], index: number }) 
         </p>
         
         {/* Bio with See More functionality */}
-        <div className="mb-3">
-          <p className="text-gray-600 text-sm leading-relaxed">
+        <div className="mb-3 relative z-10">
+          <p className={`text-gray-600 text-sm leading-relaxed ${!isExpanded && needsTruncation ? 'line-clamp-4' : ''}`}>
             {displayBio}
           </p>
           {needsTruncation && (
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className={`mt-2 inline-flex items-center gap-1 text-sm font-semibold transition-colors duration-200 ${
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsExpanded(prev => !prev);
+              }}
+              className={`mt-3 relative z-20 inline-flex items-center gap-1.5 text-sm font-semibold transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-md px-2 py-1 -ml-2 hover:bg-gray-50 active:scale-95 ${
                 isExpanded 
                   ? `text-gray-600 hover:text-gray-800` 
                   : `text-primary-600 hover:text-primary-700`
               }`}
+              aria-label={isExpanded ? 'Show less bio' : 'Show more bio'}
+              aria-expanded={isExpanded}
             >
-              {isExpanded ? 'See less' : 'See more'}
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
+              <span>{isExpanded ? 'See less' : 'See more'}</span>
+              <motion.div
+                animate={{ rotate: isExpanded ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                className="inline-flex"
+              >
                 <ChevronDown className="h-4 w-4" />
-              )}
+              </motion.div>
             </button>
           )}
         </div>
