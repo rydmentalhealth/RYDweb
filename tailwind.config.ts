@@ -10,6 +10,9 @@ const config: Config = {
   safelist: [
     { pattern: /bg-(red|blue|yellow|green|purple|indigo|pink|teal)-100/ },
     { pattern: /text-(red|blue|yellow|green|purple|indigo|pink|teal)-600/ },
+    { pattern: /from-(red|blue|yellow|green|purple|indigo|pink|teal|orange|slate|gray|cyan|black)-(400|500|600|700)/ },
+    { pattern: /via-(red|blue|yellow|green|purple|indigo|pink|teal|orange|slate|gray|cyan|black)-(400|500|600|700)/ },
+    { pattern: /to-(red|blue|yellow|green|purple|indigo|pink|teal|orange|slate|gray|cyan|black)-(400|500|600|700)/ },
   ],
   theme: {
     extend: {

@@ -11,7 +11,12 @@ import {
   ArrowRight,
   Star,
   Award,
-  Handshake
+  Handshake,
+  Sparkles,
+  Zap,
+  Eye,
+  Rocket,
+  Wand2
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -67,24 +72,92 @@ const values = [
   }
 ];
 
+// Avenger identity configurations
+const avengerIdentities: Record<string, {
+  name: string;
+  icon: typeof Sparkles;
+  color: string;
+  gradient: string;
+  description: string;
+  power: string;
+}> = {
+  'Scarlet Witch': {
+    name: 'Scarlet Witch',
+    icon: Wand2,
+    color: 'red',
+    gradient: 'from-red-500 via-pink-500 to-purple-600',
+    description: 'Master of transformation and healing',
+    power: 'Reality Manipulation'
+  },
+  'Nick Fury': {
+    name: 'Nick Fury',
+    icon: Eye,
+    color: 'slate',
+    gradient: 'from-slate-600 via-gray-700 to-black',
+    description: 'Strategic leader and organizer',
+    power: 'Strategic Vision'
+  },
+  'Black Widow': {
+    name: 'Black Widow',
+    icon: Zap,
+    color: 'red',
+    gradient: 'from-red-600 via-orange-500 to-yellow-500',
+    description: 'Empathetic guardian and advocate',
+    power: 'Empathetic Connection'
+  },
+  'Logan Roy': {
+    name: 'Logan Roy',
+    icon: Rocket,
+    color: 'orange',
+    gradient: 'from-orange-500 via-red-500 to-yellow-500',
+    description: 'Creative visionary and storyteller',
+    power: 'Creative Mastery'
+  },
+  'Iron Man': {
+    name: 'Iron Man',
+    icon: Sparkles,
+    color: 'blue',
+    gradient: 'from-blue-500 via-cyan-500 to-teal-500',
+    description: 'Innovative therapist and healer',
+    power: 'Technological Healing'
+  }
+};
+
 const team = [
   {
-    name: 'Omondo Shalom',
-    role: 'Executive Director',
-    image: '/MariamNakatudde2.jpeg',
-    bio: 'A passionate mental health advocate with over 5 years of experience working with mental health organizations. Her dedication to transforming lives through accessible mental healthcare and community support has helped countless individuals on their healing journey.'
-  },
-  {
-    name: 'Ceasor Twinemugabe',
-    role: 'Co-Founder & Marketing Director',
-    image: '/AugustusTwinemugabe.jpeg',
-    bio: 'Leading the organization\'s creative direction and outreach strategies. He also guides community programs and support initiatives with passion and expertise, working to create safe, inclusive spaces for healing.'
-  },
-  {
     name: 'Namuyanja Annah Veronica',
-    role: 'Chief Operating Officer',
-    image: '/AugustusTwinemugabe.jpeg',
-    bio: 'Leading the organization\'s creative direction and outreach strategies. She also guides community programs and support initiatives with passion and expertise, working to create safe, inclusive spaces for healing.'
+    role: 'Chief Operations Officer',
+    image: '/veronica-namuyanja.jpeg',
+    bio: 'Veronica is a medical student passionate about mental health as an entity in health. She is dedicated to incorporating mental health in general health care systems through creating awareness and building a safe space for peers and addressing core issues concerning mental health that are often underlooked by society.',
+    avengerIdentity: 'Scarlet Witch'
+  },
+  {
+    name: 'Henry Bwambale',
+    role: 'General Secretary',
+    image: '/henry-bwambale.jpeg',
+    bio: 'Henry is a dedicated medical student with a deep passion for mental health, health systems, and organizational leadership. As General Secretary at RYD Mental Health, he is committed to fostering structure, collaboration, and purpose-driven impact within the organization. Henry believes in the power of organized systems and compassionate leadership to create meaningful change in communities.',
+    avengerIdentity: 'Nick Fury'
+  },
+  {
+    name: 'Reem Adio',
+    role: 'Client Experience Associate',
+    image: '/reem-adio.jpeg',
+    bio: 'Reem is a 5th-year medical student with a deep passion for mental health advocacy and holistic well-being. Driven by a desire to bridge the gap between clinical medicine and emotional wellness, Reem actively promotes mental health awareness among students and communities. Through initiatives such as expressive writing, peer support, and education, she aims to empower individuals to prioritize their mental well-being and seek help without stigma. Her interests lie in psychiatry, community mental health, and the integration of mindfulness and self-care into everyday life. Reem believes that true healing begins when both the mind and body are cared for with compassion.',
+    avengerIdentity: 'Black Widow'
+  },
+  {
+    name: 'Raymond Kasagga',
+    role: 'Creatives Director',
+    image: '/raymond-kasagga.jpeg',
+    bio: 'Raymond is a 5th-year medical student passionate about mental health awareness and creative storytelling. He uses his voice and creativity to inspire conversations, challenge stigma, and promote healing within communities.',
+    avengerIdentity: 'Logan Roy'
+  },
+  {
+    name: 'Paul Ssemwogerere Birungi',
+    role: 'Programs Director',
+    image: '/paul-birungi.jpeg',
+    bio: 'Paul Ssemwogerere Birungi is a psychotherapist and community psychologist dedicated to advancing mental health and emotional well-being. At RYD, he supports individuals and communities through therapy, psychosocial support, and wellness programs that promote healing and resilience. His work combines empathy with evidence-based practice, ensuring inclusive and person-centered care. Paul is also a strong advocate for disability inclusion and the mental health rights of vulnerable groups in Uganda.',
+    avengerIdentity: 'Iron Man'
   }
 ];
 
@@ -132,27 +205,67 @@ const ValueCard = ({ value, index }: { value: typeof values[0], index: number })
 };
 
 const TeamCard = ({ member, index }: { member: typeof team[0], index: number }) => {
+  const avenger = avengerIdentities[member.avengerIdentity];
+  const AvengerIcon = avenger.icon;
+  
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="bg-white rounded-2xl shadow-lg overflow-hidden"
+      transition={{ duration: 0.6, delay: index * 0.15 }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      className="group relative bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-transparent hover:border-gray-200 transition-all duration-300"
     >
-      <div className="relative h-64">
+      {/* Avenger Badge - Top Right */}
+      <div className={`absolute top-4 right-4 z-20 bg-gradient-to-br ${avenger.gradient} p-3 rounded-full shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+        <AvengerIcon className="h-6 w-6 text-white" />
+      </div>
+
+      {/* Gradient Overlay on Image */}
+      <div className={`absolute inset-0 bg-gradient-to-t ${avenger.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-300 z-10`}></div>
+
+      {/* Profile Image */}
+      <div className="relative h-72 overflow-hidden">
         <Image
           src={member.image}
           alt={member.name}
           fill
-          className="object-cover"
+          className="object-cover group-hover:scale-110 transition-transform duration-500"
         />
+        {/* Shine effect on hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-20 transform -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
       </div>
-      <div className="p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-1">{member.name}</h3>
-        <p className="text-primary-600 font-medium mb-3">{member.role}</p>
-        <p className="text-gray-600">{member.bio}</p>
+
+      {/* Content */}
+      <div className="p-6 relative">
+        {/* Avenger Identity Badge */}
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${avenger.gradient} text-white text-sm font-semibold mb-4 shadow-md`}>
+          <AvengerIcon className="h-4 w-4" />
+          <span>{avenger.name}</span>
+        </div>
+
+        <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-primary-600 transition-colors">
+          {member.name}
+        </h3>
+        <p className="text-primary-600 font-semibold mb-3 text-sm uppercase tracking-wide">
+          {member.role}
+        </p>
+        <p className="text-gray-600 text-sm leading-relaxed line-clamp-4">
+          {member.bio}
+        </p>
+
+        {/* Power Badge */}
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+            <span className="font-medium">{avenger.power}</span>
+          </div>
+        </div>
       </div>
+
+      {/* Decorative corner accent */}
+      <div className={`absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr ${avenger.gradient} opacity-5 rounded-tr-full`}></div>
     </motion.div>
   );
 };
@@ -291,28 +404,75 @@ export default function AboutPage() {
         </section>
 
         {/* Team Section */}
-        <section className="py-20">
+        <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-center max-w-3xl mx-auto mb-16"
+              className="text-center max-w-4xl mx-auto mb-16"
             >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 text-white text-sm font-semibold mb-6 shadow-lg">
+                <Shield className="h-4 w-4" />
+                <span>RYD Avengers Initiative</span>
+              </div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
                 Our Team
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-gray-600 mb-4">
                 Meet the dedicated professionals behind our mission.
+              </p>
+              <p className="text-gray-500 max-w-2xl mx-auto">
+                At RYD, we believe every team member is a hero and brings a unique strength to the mission of restoring minds and empowering communities. To celebrate this, each core leader is matched with an "Avenger Identity" — a symbol of their role, personality, and contribution to the organization.
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {team.map((member, index) => (
                 <TeamCard key={member.name} member={member} index={index} />
               ))}
             </div>
+
+            {/* Avenger Legend */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="mt-16 max-w-4xl mx-auto"
+            >
+              <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-gray-100">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center flex items-center justify-center gap-2">
+                  <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
+                  <span>Avenger Identities</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(avengerIdentities).map(([key, avenger]) => {
+                    const Icon = avenger.icon;
+                    return (
+                      <div
+                        key={key}
+                        className={`p-4 rounded-xl bg-gradient-to-br ${avenger.gradient} bg-opacity-10 border-2 border-transparent hover:border-gray-300 transition-all`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className={`p-2 rounded-lg bg-gradient-to-br ${avenger.gradient}`}>
+                            <Icon className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-gray-900">{avenger.name}</h4>
+                            <p className="text-xs text-gray-600">{avenger.description}</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          <span className="font-semibold">Power:</span> {avenger.power}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
           </div>
         </section>
 
