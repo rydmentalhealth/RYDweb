@@ -267,24 +267,6 @@ export default function BlogPage() {
       icon: Heart,
     },
     {
-      id: 'u2',
-      title: 'New Volunteer Portal Beta',
-      date: '2025-06-15',
-      summary: 'A beta of the volunteer portal is live for early feedback with task assignments and onboarding materials.',
-      content: (
-        <div>
-          <p>
-            The volunteer portal beta introduces task tracking, onboarding checklists, and a unified place for updates.
-            We are gathering feedback to shape the next milestones before a full public release.
-          </p>
-          <p>
-            If you would like to be part of the beta, please reach out to our team.
-          </p>
-        </div>
-      ),
-      icon: Heart,
-    },
-  ];
 
   const commPosts: Post[] = [
     {
