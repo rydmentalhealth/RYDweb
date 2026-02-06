@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { prisma } from "@/lib/db"
 import { z } from "zod"
-import { PrismaClient } from "@prisma/client"
 
 // Schema for validating POST request
 const transactionSchema = z.object({
@@ -54,8 +53,7 @@ export async function GET(req: NextRequest) {
       }
     }
     
-    // Access the model using property name matching the schema
-    const prisma = new PrismaClient()
+    // Access the model using shared Prisma client
     const transactions = await prisma.financialTransaction.findMany({
       where,
       orderBy: {
@@ -93,8 +91,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validatedData = transactionSchema.parse(body)
     
-    // Access the model using property name matching the schema
-    const prisma = new PrismaClient()
+    // Access the model using shared Prisma client
     const transaction = await prisma.financialTransaction.create({
       data: {
         type: validatedData.type,

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { withAccelerate } from '@prisma/extension-accelerate'
 
 // PrismaClient is attached to the `global` object in development to prevent
 // exhausting your database connection limit.
@@ -33,16 +34,24 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    datasources: {
-      db: {
-        url: databaseUrl || fallbackUrl,
-      },
+// Create a single PrismaClient instance and conditionally enable Accelerate
+const baseClient = new PrismaClient({
+  datasources: {
+    db: {
+      url: databaseUrl || fallbackUrl,
     },
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
+  },
+  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+});
+
+// Enable Accelerate via either PRISMA_DATABASE_URL (preferred) or POSTGRES_URL
+const rawAccelerateUrl = process.env.PRISMA_DATABASE_URL || process.env.POSTGRES_URL || databaseUrl;
+export const isAccelerateEnabled = Boolean(
+  rawAccelerateUrl &&
+  (rawAccelerateUrl.includes('accelerate.prisma-data.net') || rawAccelerateUrl.startsWith('prisma://'))
+);
+
+export const prisma = (globalForPrisma.prisma || (isAccelerateEnabled ? baseClient.$extends(withAccelerate()) : baseClient)) as typeof baseClient;
 
 // Export db as an alias for prisma to maintain backward compatibility
 export const db = prisma;

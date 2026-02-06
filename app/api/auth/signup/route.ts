@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient, UserRole, UserStatus } from "@prisma/client";
+import { UserRole, UserStatus } from "@prisma/client";
 import { z } from "zod";
 import { hashPassword } from "@/lib/server/bcrypt";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 // Input validation schema
 const userSchema = z.object({
@@ -30,6 +29,7 @@ export async function POST(req: Request) {
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
+      cacheStrategy: { ttl: 300 },
     });
 
     if (existingUser) {
@@ -77,6 +77,6 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   } finally {
-    await prisma.$disconnect();
+    // Connection pooling handled by shared client
   }
 } 

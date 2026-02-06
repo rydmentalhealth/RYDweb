@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,8 +15,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const prisma = new PrismaClient()
-
     try {
       const count = await prisma.user.count({
         where: {
@@ -26,7 +24,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ count })
     } finally {
-      await prisma.$disconnect()
+      // Shared client manages pooling
     }
   } catch (error) {
     console.error('Error fetching pending users count:', error)

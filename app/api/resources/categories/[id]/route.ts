@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
 
-const prisma = new PrismaClient()
+// Use shared Prisma client
 
 // GET - Get a single category by ID
 export async function GET(

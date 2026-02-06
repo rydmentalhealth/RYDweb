@@ -38,13 +38,16 @@ declare module "next-auth/jwt" {
 const isProduction = process.env.NODE_ENV === "production";
 const isVercel = !!process.env.VERCEL;
 const isDevelopment = process.env.NODE_ENV === "development";
+// Accept both AUTH_URL/NEXTAUTH_URL and common misspellings
+const AUTH_URL_FALLBACK = process.env.AUTH_URL || (process.env as any).AUTH_URL || (process.env as any).AUTH_ULR || undefined;
+const NEXTAUTH_URL_FALLBACK = process.env.NEXTAUTH_URL || (process.env as any).NEXTAUTH_URL || (process.env as any).NEXT_URL || undefined;
 
 // Get the correct URL for the environment
 const getAuthUrl = () => {
   // In production, prioritize AUTH_URL, then NEXTAUTH_URL
   if (isProduction) {
-    if (process.env.AUTH_URL) return process.env.AUTH_URL;
-    if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
+    if (AUTH_URL_FALLBACK) return AUTH_URL_FALLBACK;
+    if (NEXTAUTH_URL_FALLBACK) return NEXTAUTH_URL_FALLBACK;
     if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   }
   
@@ -63,7 +66,7 @@ console.log("[Auth] URL Resolution:", {
 
 // Get the secret with proper fallback
 const getAuthSecret = () => {
-  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || (process.env as any).AUTH_SECRETE;
   
   if (!secret) {
     // Avoid throwing at import-time during static analysis/build. Log and use placeholder.

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/db'
 import { startOfMonth, startOfWeek } from 'date-fns'
 import { isAdmin } from '@/lib/auth/rbac'
 
@@ -11,8 +11,6 @@ export async function GET(request: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const prisma = new PrismaClient()
 
     try {
       // Get user from database
@@ -306,7 +304,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(stats)
     } finally {
-      await prisma.$disconnect()
+      // Shared client manages pooling
     }
   } catch (error) {
     console.error('[Dashboard Stats API] Error:', error)
