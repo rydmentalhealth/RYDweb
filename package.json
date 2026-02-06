@@ -11,7 +11,12 @@
     "lint": "next lint",
     "postinstall": "npx prisma generate",
     "verify:auth": "node scripts/verify-auth-config.js",
-    "check-env": "node scripts/check-env.js"
+    "check-env": "node scripts/check-env.js",
+    "setup:db": "npx ts-node scripts/setup-database.ts",
+    "test:db": "npx ts-node scripts/test-db-connection.ts",
+    "health:db": "curl -s http://localhost:3000/api/health/database | jq .",
+    "create:staff": "npx ts-node scripts/create-staff.ts",
+    "fix:staff-login": "npx ts-node scripts/fix-staff-login.ts"
   },
   "dependencies": {
     "@auth/core": "^0.39.1",

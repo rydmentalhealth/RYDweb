@@ -44,6 +44,11 @@ export async function middleware(req: NextRequest) {
     response.headers.set("X-XSS-Protection", "1; mode=block");
   }
   
+  // Allow health check endpoints (critical for monitoring database issues)
+  if (pathname.startsWith("/api/health")) {
+    return response;
+  }
+
   // Allow public routes
   if (routeAccess.public.some(route => pathname.startsWith(route))) {
     return response;
@@ -123,10 +128,44 @@ export async function middleware(req: NextRequest) {
   } catch (error) {
     console.error("[Middleware] Token validation error:", error);
     
-    // In case of token validation error, redirect to signin
-    // Don't throw error that might interfere with auth flow
+    // Check if this is a database connection error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isDatabaseError = errorMessage.includes('ECONNREFUSED') ||
+                           errorMessage.includes('ENOTFOUND') ||
+                           errorMessage.includes('ETIMEDOUT') ||
+                           errorMessage.includes('Connection terminated') ||
+                           errorMessage.includes('Environment variable not found: DATABASE_URL');
+    
+    if (isDatabaseError) {
+      console.error("[Middleware] Database connection error detected:", errorMessage);
+      // For database errors, show a maintenance page instead of redirecting to login
+      // This prevents infinite redirect loops when the database is down
+      return new Response(
+        `
+        <html>
+          <head><title>Service Temporarily Unavailable</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Service Temporarily Unavailable</h1>
+            <p>We're experiencing technical difficulties. Please try again in a few moments.</p>
+            <p>If the problem persists, please contact support.</p>
+            <script>setTimeout(() => window.location.reload(), 30000);</script>
+          </body>
+        </html>
+        `,
+        {
+          status: 503,
+          headers: {
+            'Content-Type': 'text/html',
+            'Retry-After': '30'
+          }
+        }
+      );
+    }
+    
+    // In case of other token validation errors, redirect to signin
     const signInUrl = new URL("/login", req.url);
     signInUrl.searchParams.set("callbackUrl", pathname);
+    signInUrl.searchParams.set("error", "session-error");
     return NextResponse.redirect(signInUrl);
   }
 }
